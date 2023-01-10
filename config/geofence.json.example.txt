@@ -1,0 +1,14 @@
+[
+{
+"name": "Your City",
+"path": [
+[
+xx.xxxxxxx,
+-xx.xxxxxx
+],
+[
+xx.xxxxxx,
+-xx.xxxxxxx
+]...
+}
+]
