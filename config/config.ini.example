@@ -1,0 +1,38 @@
+[Config]
+bot_token = xxxxxxxxxxxxxxxxxxxxxxxx
+language = en
+timezone_offset = -04:00
+prefix = !
+admins = #3#####
+trash_channel = #######
+trash_server = ######
+
+pokemon_icon_repo = https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border/
+emote_repo = https://raw.githubusercontent.com/alexmartz710/dp_emotes/master/
+
+[Maps]
+use_static_maps = True
+provider = tileserver
+key = https://tiles.pokemap.com/
+
+use_map_frontend = False
+frontend = pmsf/rdm/rmad
+map_url = https://www.pokemap.com/
+
+[Commands]
+required_roles = ["123456...", "7890123..."]
+channels = ["123456...", "7890123..."]
+
+quest_aliases = ["quests", "research", "q"]
+
+show_used_timespan_in_footer = False
+
+[DB]
+scanner_db_schema = rdm
+# rdm only supported currently
+
+host = 127.0.0.1
+port = 3306
+user = YourRDMUser
+password = YourSecurePass
+scanner_db_name = rdmdb
