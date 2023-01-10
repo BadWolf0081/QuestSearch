@@ -4,7 +4,7 @@
   1.  `sudo apt install python3 python3-pip`
   2.  `git clone https://github.com/BadWolf0081/QuestSearch.git`
   3.  `cd QuestSearch && cp config/config.ini.example config/config.ini && cp config/geofence.json.example config/geofence.json`
-  4.  
+  4.  `nano config/config.ini`
   
 Fill out DB info etc...You will need a discord bot & token.  (https://www.writebots.com/discord-bot-token/)
 
