@@ -86,6 +86,7 @@ class static_map:
             static_map = image_msg.attachments[0].url
             stream.close()
 
+
         return static_map
 
 class map_url:

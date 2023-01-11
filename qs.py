@@ -2,6 +2,7 @@ import discord
 import json
 import asyncio
 import aiomysql
+
 import matplotlib.pyplot as plt
 import pyshorteners
 from discord.ext import commands
@@ -15,7 +16,7 @@ activity = discord.Activity(type=discord.ActivityType.watching, name="Quest Bot:
 intents = discord.Intents.default()
 intents.message_content = True
 config = util.config.create_config("config/config.ini")
-bot = commands.Bot(command_prefix=config['prefix'], case_insensitive=1, intents=intents, activity=activity, status=discord.Status.idle)
+bot = commands.Bot(command_prefix=config['prefix'], case_insensitive=1, intents=intents, activity=activity, status=discord.Status.online)
 bot.max_moves_in_list = 340
 bot.config = config
 short = pyshorteners.Shortener().tinyurl.short
@@ -70,6 +71,17 @@ async def get_data(area):
     await conn.ensure_closed()
     return quests
 
+def isUser(role_ids, channel_id):
+    if len(bot.config["cmd_roles"][0]) + len(bot.config["cmd_channels"][0]) == 0:
+        return True
+    elif str(channel_id) in bot.config["cmd_channels"]:
+        return True
+    else:
+        for role in role_ids:
+            if str(role.id) in bot.config["cmd_roles"]:
+                return True
+        return False
+
 def get_area(areaname):
     stringfence = "-100 -100, -100 100, 100 100, 100 -100, -100 -100"
     namefence = bot.locale['all']
@@ -85,6 +97,9 @@ def get_area(areaname):
 
 @bot.command(pass_context=True, aliases=bot.config['quest_aliases'])
 async def quest(ctx, areaname = "", *, reward):
+    if not isUser(ctx.author.roles, ctx.channel.id):
+        print(f"@{ctx.author.name} tried to use !quest but is no user")
+        return
     footer_text = ""
     text = ""
     loading = bot.locale['loading_quests']
@@ -99,6 +114,7 @@ async def quest(ctx, areaname = "", *, reward):
     embed = discord.Embed(title=bot.locale['quests'], description=text)
     embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     message = await ctx.send(embed=embed)
+    
     items = list()
     mons = list()
     item_found = False
@@ -111,7 +127,7 @@ async def quest(ctx, areaname = "", *, reward):
     if not item_found:
         mon = details(reward, bot.config['mon_icon_repo'], bot.config['language'])
         embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
-        embed.title = f"{mon.name} {bot.locale['quests']}"
+        embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
         mons.append(mon.id)
     
     await message.edit(embed=embed)
@@ -171,7 +187,7 @@ async def quest(ctx, areaname = "", *, reward):
                 length = length + len(entry)
                 
     embed.description = text
-    image = ""
+    image = "https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png"
     if length > 0:
         if bot.config['use_static']:
             if bot.config['static_provider'] == "mapbox":
@@ -218,5 +234,8 @@ async def on_ready():
     if bot.config['use_static']:
         trash_channel = await bot.fetch_channel(bot.config['host_channel'])
         bot.static_map = util.maps.static_map(config['static_provider'], config['static_key'], trash_channel, bot.config['mon_icon_repo'])
-        
-bot.run(bot.config['bot_token'])
+
+if __name__ == "__main__":
+    for extension in extensions:
+        bot.load_extension(extension)
+    bot.run(bot.config['bot_token'])
