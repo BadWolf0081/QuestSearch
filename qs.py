@@ -3,6 +3,7 @@ import json
 import asyncio
 import aiomysql
 
+from datetime import datetime, date
 import matplotlib.pyplot as plt
 import pyshorteners
 from discord.ext import commands
@@ -65,8 +66,17 @@ with open("config/emotes.json", encoding="utf-8") as f:
 async def get_data(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
-    async with conn.cursor() as cur:   
+    async with conn.cursor() as cur:
         await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM rdmdb.pokestop WHERE quest_type IS NOT NULL AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
+        quests = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests
+    
+async def get_datak(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration FROM rdmdb.pokestop, rdmdb.incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =8 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY quest_item_id ASC, quest_pokemon_id ASC, pokestop.name;")
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
@@ -131,8 +141,10 @@ async def quest(ctx, areaname = "", *, reward):
         mons.append(mon.id)
     
     await message.edit(embed=embed)
-
-    quests = await get_data(area)
+    if mon.name == "Kecleon":
+        quests = await get_datak(area)
+    else:
+        quests = await get_data(area)
 
     length = 0
     reward_mons = list()
@@ -141,50 +153,73 @@ async def quest(ctx, areaname = "", *, reward):
     lon_list = list()
 
     embed.description = text
-    for quest_json, quest_text, lat, lon, stop_name, stop_id in quests:
-        quest_json = json.loads(quest_json)
-
-        found_rewards = True
-        mon_id = 0
-        item_id = 0
-
-        if bot.config['db_scan_schema'] == "rdm":
-            if 'pokemon_id' in quest_json[0]["info"]:
-                mon_id = quest_json[0]["info"]["pokemon_id"]
-            if 'item_id' in quest_json[0]["info"]:
-                item_id = quest_json[0]["info"]["item_id"]
-        elif bot.config['db_scan_schema'] == "mad":
-            item_id = quest_json[0]["item"]["item"]
-            mon_id = quest_json[0]["pokemon_encounter"]["pokemon_id"]
-        if item_id in items:
-            reward_items.append([item_id, lat, lon])
-            emote_name = f"i{item_id}"
-            emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
-        elif mon_id in mons:
+    if mon.name == "Kecleon":
+        for lat, lon, stop_name, stop_id, expiration in quests:
+            end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
+            found_rewards = True
+            mon_id = 352
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"m{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
-        else:
-            found_rewards = False
     
-        if found_rewards:
-            if len(stop_name) >= 30:
-                stop_name = stop_name[0:27] + "..."
-            lat_list.append(lat)
-            lon_list.append(lon)
+            if found_rewards:
+                if len(stop_name) >= 35:
+                    stop_name = stop_name[0:35] + "."
+                lat_list.append(lat)
+                lon_list.append(lon)
 
-            if bot.config['use_map']:
-                map_url = bot.map_url.quest(lat, lon, stop_id)
-            else:
-                map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-            map_url = short(map_url)
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+                map_url = short(map_url)
 
-            entry = f"[{stop_name}]({map_url})\n"
-            if length + len(entry) >= 2048:
-                break
+                entry = f"[{stop_name} - {end}]({map_url})\n"
+                if length + len(entry) >= 2048:
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
+    else:
+        for quest_json, quest_text, lat, lon, stop_name, stop_id in quests:
+            quest_json = json.loads(quest_json)
+            found_rewards = True
+            mon_id = 0
+            item_id = 0
+
+            if 'pokemon_id' in quest_json[0]["info"]:
+                    mon_id = quest_json[0]["info"]["pokemon_id"]
+            if 'item_id' in quest_json[0]["info"]:
+                    item_id = quest_json[0]["info"]["item_id"]
+            if item_id in items:
+                reward_items.append([item_id, lat, lon])
+                emote_name = f"i{item_id}"
+                emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
+            elif mon_id in mons:
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"m{mon_id}"
+                emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
             else:
-                text = text + entry
-                length = length + len(entry)
+                found_rewards = False
+    
+            if found_rewards:
+                if len(stop_name) >= 35:
+                    stop_name = stop_name[0:35] + "."
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+                map_url = short(map_url)
+
+                entry = f"[{stop_name}]({map_url})\n"
+                if length + len(entry) >= 2048:
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
                 
     embed.description = text
     image = "https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png"
