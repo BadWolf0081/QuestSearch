@@ -121,7 +121,16 @@ async def quest(ctx, areaname = "", *, reward):
 
     print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
 
-    embed = discord.Embed(title=bot.locale['quests'], description=text)
+    if reward == 'Kecleon':
+        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+    elif reward == 'kecleon':
+        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+    elif reward == 'keckleon':
+        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+    elif reward == 'Keckleon':
+        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+    else:
+        embed = discord.Embed(title=bot.locale['quests'], description=text)
     embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     message = await ctx.send(embed=embed)
     
