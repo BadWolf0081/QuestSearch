@@ -120,10 +120,8 @@ async def quest(ctx, areaname = "", *, reward):
         loading = f"{loading} • {footer_text}"
 
     print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
-    if reward == 'Kecleon':
-        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-    else:
-        embed = discord.Embed(title=bot.locale['quests'], description=text)
+
+    embed = discord.Embed(title=bot.locale['quests'], description=text)
     embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     message = await ctx.send(embed=embed)
     
@@ -143,7 +141,7 @@ async def quest(ctx, areaname = "", *, reward):
         mons.append(mon.id)
     
     await message.edit(embed=embed)
-    if mon.name == "Kecleon":
+    if not item_found and mon.name == "Kecleon":
         quests = await get_datak(area)
     else:
         quests = await get_data(area)
@@ -155,7 +153,7 @@ async def quest(ctx, areaname = "", *, reward):
     lon_list = list()
 
     embed.description = text
-    if mon.name == "Kecleon":
+    if not item_found and mon.name == "Kecleon":
         for lat, lon, stop_name, stop_id, expiration in quests:
             end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
             found_rewards = True
