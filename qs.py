@@ -76,7 +76,7 @@ async def get_datak(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration FROM rdmdb.pokestop, rdmdb.incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =8 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY quest_item_id ASC, quest_pokemon_id ASC, pokestop.name;")
+        await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration FROM rdmdb.pokestop, rdmdb.incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =8 AND incident.expiration >= UNIX_TIMESTAMP()+300 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
@@ -119,9 +119,11 @@ async def quest(ctx, areaname = "", *, reward):
         footer_text = area[1]
         loading = f"{loading} • {footer_text}"
 
-    print(f"@{ctx.author.name} requested quests for area {area[1]}")
-
-    embed = discord.Embed(title=bot.locale['quests'], description=text)
+    print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
+    if reward == 'Kecleon':
+        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+    else:
+        embed = discord.Embed(title=bot.locale['quests'], description=text)
     embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     message = await ctx.send(embed=embed)
     
@@ -163,8 +165,8 @@ async def quest(ctx, areaname = "", *, reward):
             emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
     
             if found_rewards:
-                if len(stop_name) >= 35:
-                    stop_name = stop_name[0:35] + "."
+                if len(stop_name) >= 24:
+                    stop_name = stop_name[0:24] + "."
                 lat_list.append(lat)
                 lon_list.append(lon)
 
@@ -172,9 +174,8 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = bot.map_url.quest(lat, lon, stop_id)
                 else:
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-                map_url = short(map_url)
 
-                entry = f"[{stop_name} - {end}]({map_url})\n"
+                entry = f"[{stop_name} **{end}**]({map_url})\n"
                 if length + len(entry) >= 2048:
                     break
                 else:
@@ -203,8 +204,8 @@ async def quest(ctx, areaname = "", *, reward):
                 found_rewards = False
     
             if found_rewards:
-                if len(stop_name) >= 35:
-                    stop_name = stop_name[0:35] + "."
+                if len(stop_name) >= 30:
+                    stop_name = stop_name[0:30] + "."
                 lat_list.append(lat)
                 lon_list.append(lon)
 
@@ -212,7 +213,6 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = bot.map_url.quest(lat, lon, stop_id)
                 else:
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-                map_url = short(map_url)
 
                 entry = f"[{stop_name}]({map_url})\n"
                 if length + len(entry) >= 2048:
