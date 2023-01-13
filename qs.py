@@ -175,8 +175,8 @@ async def quest(ctx, areaname = "", *, reward):
             emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
     
             if found_rewards:
-                if len(stop_name) >= 24:
-                    stop_name = stop_name[0:24] + "."
+                if len(stop_name)+len(end) >= 31:
+                    stop_name = stop_name[0:25]
                 lat_list.append(lat)
                 lon_list.append(lon)
 
@@ -214,8 +214,8 @@ async def quest(ctx, areaname = "", *, reward):
                 found_rewards = False
     
             if found_rewards:
-                if len(stop_name) >= 30:
-                    stop_name = stop_name[0:30] + "."
+                if len(stop_name) >= 31:
+                    stop_name = stop_name[0:30]
                 lat_list.append(lat)
                 lon_list.append(lon)
 
