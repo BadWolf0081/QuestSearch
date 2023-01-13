@@ -121,13 +121,13 @@ async def quest(ctx, areaname = "", *, reward):
 
     print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
 
-    if reward == 'Kecleon':
+    if reward == "Kecleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-    elif reward == 'kecleon':
+    elif reward == "kecleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-    elif reward == 'keckleon':
+    elif reward == "keckleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-    elif reward == 'Keckleon':
+    elif reward == "Keckleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
     else:
         embed = discord.Embed(title=bot.locale['quests'], description=text)
@@ -146,7 +146,10 @@ async def quest(ctx, areaname = "", *, reward):
     if not item_found:
         mon = details(reward, bot.config['mon_icon_repo'], bot.config['language'])
         embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
-        embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
+        if mon.name == "Kecleon":
+            embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
+        else:
+            embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
         mons.append(mon.id)
     
     await message.edit(embed=embed)
