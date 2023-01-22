@@ -81,6 +81,15 @@ async def get_datak(area):
     await conn.ensure_closed()
     return quests
 
+async def get_datacoin(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration FROM pokestop, incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =7 AND incident.expiration >= UNIX_TIMESTAMP()+300 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY incident.expiration DESC;")
+        quests = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests
+
 def isUser(role_ids, channel_id):
     if len(bot.config["cmd_roles"][0]) + len(bot.config["cmd_channels"][0]) == 0:
         return True
@@ -129,6 +138,10 @@ async def quest(ctx, areaname = "", *, reward):
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
     elif reward == "Keckleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+    elif reward == "Coins":
+        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+    elif reward == "coins":
+        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
     else:
         embed = discord.Embed(title=bot.locale['quests'], description=text)
     embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
@@ -148,6 +161,8 @@ async def quest(ctx, areaname = "", *, reward):
         embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
         if mon.name == "Kecleon":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
+        elif mon.name == "Coins":
+            embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
         else:
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
         mons.append(mon.id)
@@ -155,6 +170,8 @@ async def quest(ctx, areaname = "", *, reward):
     await message.edit(embed=embed)
     if not item_found and mon.name == "Kecleon":
         quests = await get_datak(area)
+    elif not item_found and mon.name == "Coins":
+        quests = await get_datacoin(area)
     else:
         quests = await get_data(area)
 
@@ -191,6 +208,32 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     text = text + entry
                     length = length + len(entry)
+    elif not item_found and mon.name == "Coins":
+        for lat, lon, stop_name, stop_id, expiration in quests:
+            end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
+            found_rewards = True
+            mon_id = 99999
+            reward_mons.append([mon_id, lat, lon])
+            emote_name = f"m{mon_id}"
+            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png"
+    
+            if found_rewards:
+                if len(stop_name)+len(end) >= 31:
+                    stop_name = stop_name[0:25]
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+                entry = f"[{stop_name} **{end}**]({map_url})\n"
+                if length + len(entry) >= 2048:
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
     else:
         for quest_json, quest_text, lat, lon, stop_name, stop_id in quests:
             quest_json = json.loads(quest_json)
@@ -206,6 +249,10 @@ async def quest(ctx, areaname = "", *, reward):
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
+            elif mon.name == "Coins":
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"m{mon_id}"
+                emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png"
             elif mon_id in mons:
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
