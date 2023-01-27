@@ -67,7 +67,7 @@ async def get_data(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_type IS NOT NULL AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_type IS NOT NULL AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
@@ -76,7 +76,7 @@ async def get_alt_data(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_type IS NOT NULL AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY alternative_quest_item_id ASC, alternative_quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_type IS NOT NULL AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_item_id ASC, alternative_quest_pokemon_id ASC, name;")
         quests2 = await cur.fetchall()
     await conn.ensure_closed()
     return quests2
@@ -311,8 +311,8 @@ async def quest(ctx, areaname = "", *, reward):
                 found_alt_rewards = False
     
             if found_alt_rewards:
-                if len(stop_name) >= 23:
-                    stop_name = stop_name[0:22]
+                if len(stop_name) >= 26:
+                    stop_name = stop_name[0:25]
                 lat_list.append(lat)
                 lon_list.append(lon)
 
@@ -321,7 +321,7 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
-                entry = f"[{stop_name} **(NON AR)**]({map_url})\n"
+                entry = f"[{stop_name} **NO AR**]({map_url})\n"
                 if length + len(entry) >= 2048:
                     break
                 else:
