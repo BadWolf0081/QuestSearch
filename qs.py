@@ -202,7 +202,7 @@ async def quest(ctx, areaname = "", *, reward):
             emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
     
             if found_rewards:
-                if len(stop_name)+len(end) >= 31:
+                if len(stop_name)+len(end) >= 26:
                     stop_name = stop_name[0:25]
                 lat_list.append(lat)
                 lon_list.append(lon)
@@ -228,7 +228,7 @@ async def quest(ctx, areaname = "", *, reward):
             emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png"
     
             if found_rewards:
-                if len(stop_name)+len(end) >= 31:
+                if len(stop_name)+len(end) >= 26:
                     stop_name = stop_name[0:25]
                 lat_list.append(lat)
                 lon_list.append(lon)
@@ -311,8 +311,8 @@ async def quest(ctx, areaname = "", *, reward):
                 found_alt_rewards = False
     
             if found_alt_rewards:
-                if len(stop_name) >= 31:
-                    stop_name = stop_name[0:30]
+                if len(stop_name) >= 23:
+                    stop_name = stop_name[0:22]
                 lat_list.append(lat)
                 lon_list.append(lon)
 
@@ -321,7 +321,7 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
-                entry = f"[{stop_name}]({map_url}) **(NON AR)**\n"
+                entry = f"[{stop_name} **(NON AR)**]({map_url})\n"
                 if length + len(entry) >= 2048:
                     break
                 else:
