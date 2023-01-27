@@ -72,6 +72,15 @@ async def get_data(area):
     await conn.ensure_closed()
     return quests
     
+async def get_alt_data(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_type IS NOT NULL AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY alternative_quest_item_id ASC, alternative_quest_pokemon_id ASC, name;")
+        quests2 = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests2
+    
 async def get_datak(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
@@ -174,6 +183,7 @@ async def quest(ctx, areaname = "", *, reward):
         quests = await get_datacoin(area)
     else:
         quests = await get_data(area)
+        quests2 = await get_alt_data(area)
 
     length = 0
     reward_mons = list()
@@ -240,7 +250,6 @@ async def quest(ctx, areaname = "", *, reward):
             found_rewards = True
             mon_id = 0
             item_id = 0
-
             if 'pokemon_id' in quest_json[0]["info"]:
                     mon_id = quest_json[0]["info"]["pokemon_id"]
             if 'item_id' in quest_json[0]["info"]:
@@ -272,6 +281,47 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
                 entry = f"[{stop_name}]({map_url})\n"
+                if length + len(entry) >= 2048:
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
+        for alternative_quest_json, alternative_quest_text, lat, lon, stop_name, stop_id in quests2:
+            quest_json = json.loads(alternative_quest_json)
+            found_alt_rewards = True
+            mon_id = 0
+            item_id = 0
+            if 'pokemon_id' in quest_json[0]["info"]:
+                    mon_id = quest_json[0]["info"]["pokemon_id"]
+            if 'item_id' in quest_json[0]["info"]:
+                    item_id = quest_json[0]["info"]["item_id"]
+            if item_id in items:
+                reward_items.append([item_id, lat, lon])
+                emote_name = f"i{item_id}"
+                emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
+            elif mon.name == "Coins":
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"m{mon_id}"
+                emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png"
+            elif mon_id in mons:
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"m{mon_id}"
+                emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
+            else:
+                found_alt_rewards = False
+    
+            if found_alt_rewards:
+                if len(stop_name) >= 31:
+                    stop_name = stop_name[0:30]
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+                entry = f"[{stop_name}]({map_url}) **(NON AR)**\n"
                 if length + len(entry) >= 2048:
                     break
                 else:
