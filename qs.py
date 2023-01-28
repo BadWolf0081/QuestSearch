@@ -157,7 +157,7 @@ async def quest(ctx, areaname = "", *, reward):
 
     print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
 
-    if reward == "Mega":
+    if reward.startswith("Mega"):
         embed = discord.Embed(title=bot.locale['mega'], description=text)
     elif reward == "Stardust":
         embed = discord.Embed(title=bot.locale['quests'], description=text)
@@ -192,7 +192,10 @@ async def quest(ctx, areaname = "", *, reward):
             item_found = True
     if not item_found:
         mon = details(reward, bot.config['mon_icon_repo'], bot.config['language'])
-        if mon.name == "Kecleon":
+        if reward.startswith("Mega"):
+            embed.title = f"{mon.name} {bot.locale['mega']} - {area[1]}"
+            embed.set_thumbnail(url=f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/mega_resource/{str(mon.id)}.png")
+        elif mon.name == "Kecleon":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
         elif mon.name == "Coins":
@@ -245,7 +248,9 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
                 entry = f"[{stop_name} **{end}**]({map_url})\n"
-                if length + len(entry) >= 2048:
+                if length + len(entry) >= 2400:
+                    theend = f"and more..."
+                    text = text + theend
                     break
                 else:
                     text = text + entry
@@ -271,7 +276,9 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
                 entry = f"[{stop_name} **{end}**]({map_url})\n"
-                if length + len(entry) >= 2048:
+                if length + len(entry) >= 2400:
+                    theend = f"and more..."
+                    text = text + theend
                     break
                 else:
                     text = text + entry
@@ -296,7 +303,9 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
                 entry = f"[{stop_name} **{amount}**]({map_url})\n"
-                if length + len(entry) >= 2048:
+                if length + len(entry) >= 2400:
+                    theend = f"and more..."
+                    text = text + theend
                     break
                 else:
                     text = text + entry
@@ -320,7 +329,9 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
                 entry = f"[{stop_name} **{amount}-NO AR**]({map_url})\n"
-                if length + len(entry) >= 2048:
+                if length + len(entry) >= 2400:
+                    theend = f"lots more..."
+                    text = text + theend
                     break
                 else:
                     text = text + entry
@@ -339,6 +350,11 @@ async def quest(ctx, areaname = "", *, reward):
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
+            elif mon_id in mons and reward.startswith("Mega"):
+                reward_items = 99997
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"e{mon_id}"
+                emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/mega_resource/{str(mon.id)}.png"
             elif mon_id in mons:
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
@@ -357,7 +373,7 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
                 entry = f"[{stop_name}]({map_url})\n"
-                if length + len(entry) >= 2500:
+                if length + len(entry) >= 2400:
                     theend = f"and more..."
                     text = text + theend
                     break
@@ -377,6 +393,11 @@ async def quest(ctx, areaname = "", *, reward):
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
+            elif mon_id in mons and reward.startswith("Mega"):
+                reward_items = 99997
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"e{mon_id}"
+                emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/mega_resource/{str(mon.id)}.png"
             elif mon_id in mons:
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
@@ -395,7 +416,7 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
                 entry = f"[{stop_name} **NO AR**]({map_url})\n"
-                if length + len(entry) >= 2500:
+                if length + len(entry) >= 2400:
                     theend = f" lots more ..."
                     text = text + theend
                     break
