@@ -76,7 +76,10 @@ class static_map:
 
             data = {"style": "osm-bright","latitude": center_lat,"longitude": center_lon,"zoom": zoom,"width": width,"height": height,"scale": 1,"markers": []}
             for mon_id, mon_lat, mon_lon in mons:
-                data["markers"].append({"url": f"{self.icons}pokemon_icon_{str(mon_id).zfill(3)}_00.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+                if mon_id ==99998:
+                    data["markers"].append({"url": f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/stardust/0.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+                else:
+                    data["markers"].append({"url": f"{self.icons}pokemon_icon_{str(mon_id).zfill(3)}_00.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
             for item_id, item_lat, item_lon in items:
                 data["markers"].append({"url": f"{self.icons}rewards/reward_{item_id}_1.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": item_lat,"longitude": item_lon})
 
@@ -85,7 +88,6 @@ class static_map:
             image_msg = await self.trash_channel.send(file=discord.File(stream, filename="map.png"))
             static_map = image_msg.attachments[0].url
             stream.close()
-
 
         return static_map
 

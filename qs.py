@@ -160,9 +160,9 @@ async def quest(ctx, areaname = "", *, reward):
     if reward == "Mega":
         embed = discord.Embed(title=bot.locale['mega'], description=text)
     elif reward == "Stardust":
-        embed = discord.Embed(title=bot.locale['stardust'], description=text)
+        embed = discord.Embed(title=bot.locale['quests'], description=text)
     elif reward == "stardust":
-        embed = discord.Embed(title=bot.locale['stardust'], description=text)
+        embed = discord.Embed(title=bot.locale['quests'], description=text)
     elif reward == "Kecleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
     elif reward == "kecleon":
@@ -187,20 +187,23 @@ async def quest(ctx, areaname = "", *, reward):
     for item_id in bot.items:
         if bot.items[item_id]["name"].lower() == reward.lower():
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png")
-            embed.title = f"{bot.items[item_id]['name']} {bot.locale['quests']}"
+            embed.title = f"{bot.items[item_id]['name']} {bot.locale['quests']} - {area[1]}"
             items.append(int(item_id))
             item_found = True
     if not item_found:
         mon = details(reward, bot.config['mon_icon_repo'], bot.config['language'])
-        embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
         if mon.name == "Kecleon":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
         elif mon.name == "Coins":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
+            embed.set_thumbnail(url=f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png")
         elif mon.name == "Stardust":
-            embed.title = f"{mon.name} {bot.locale['stardust']} - {area[1]}"
+            embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
+            embed.set_thumbnail(url=f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/stardust/0.png")
         else:
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
         mons.append(mon.id)
     
     if not item_found and mon.name == "Kecleon":
@@ -278,8 +281,9 @@ async def quest(ctx, areaname = "", *, reward):
             found_rewards = True
             amount = quest_reward_amount
             mon_id = 99998
+            reward_mons.append([mon_id, lat, lon])
             emote_name = f"s{amount}"
-            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border/rewards/reward_stardust.png"
+            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/stardust/0.png"
             if found_rewards:
                 if len(stop_name) >= 31:
                     stop_name = stop_name[0:30]
@@ -301,8 +305,9 @@ async def quest(ctx, areaname = "", *, reward):
             found_rewards = True
             amount = alternative_quest_reward_amount
             mon_id = 99998
+            reward_mons.append([mon_id, lat, lon])
             emote_name = f"s{amount}"
-            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border/rewards/reward_stardust.png"
+            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/stardust/0.png"
             if found_rewards:
                 if len(stop_name) >= 22:
                     stop_name = stop_name[0:21]
@@ -352,7 +357,9 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
                 entry = f"[{stop_name}]({map_url})\n"
-                if length + len(entry) >= 2048:
+                if length + len(entry) >= 2500:
+                    theend = f"and more..."
+                    text = text + theend
                     break
                 else:
                     text = text + entry
@@ -370,10 +377,6 @@ async def quest(ctx, areaname = "", *, reward):
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
-            elif mon.name == "Coins":
-                reward_mons.append([mon_id, lat, lon])
-                emote_name = f"m{mon_id}"
-                emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png"
             elif mon_id in mons:
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
@@ -392,7 +395,9 @@ async def quest(ctx, areaname = "", *, reward):
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
                 entry = f"[{stop_name} **NO AR**]({map_url})\n"
-                if length + len(entry) >= 2048:
+                if length + len(entry) >= 2500:
+                    theend = f" lots more ..."
+                    text = text + theend
                     break
                 else:
                     text = text + entry
@@ -429,26 +434,6 @@ async def quest(ctx, areaname = "", *, reward):
                     bot.custom_emotes.pop(emote_name)
 
             elif bot.config['static_provider'] == "tileserver":
-                guild = await bot.fetch_guild(bot.config['host_server'])
-                existing_emotes = await guild.fetch_emojis()
-                emote_exist = False
-                for existing_emote in existing_emotes:
-                    if emote_name == existing_emote.name:
-                        emote_exist = True
-                if not emote_exist:
-                    try:
-                        image = await Admin.download_url("", emote_img)
-                        emote = await guild.create_custom_emoji(name=emote_name, image=image)
-                        emote_ref = f"<:{emote.name}:{emote.id}>"
-
-                        if emote_name in bot.custom_emotes:
-                            bot.custom_emotes[emote_name] = emote_ref
-                        else:
-                            bot.custom_emotes.update({emote_name: emote_ref})
-                    except Exception as err:
-                        print(err)
-                        print(f"Error while importing emote {emote_name}")
-
                 image = await bot.static_map.quest(lat_list, lon_list, reward_items, reward_mons, bot.custom_emotes)
     else:
         embed.description = bot.locale["no_quests_found"]
