@@ -81,6 +81,24 @@ async def get_alt_data(area):
     await conn.ensure_closed()
     return quests2
     
+async def get_datastar(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT quest_reward_amount, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 3 AND quest_reward_amount >= 501 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_reward_amount DESC, quest_pokemon_id ASC, name;")
+        quests = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests
+    
+async def get_alt_datastar(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT alternative_quest_reward_amount, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 3 AND alternative_quest_reward_amount >= 501 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_reward_amount DESC, quest_pokemon_id ASC, name;")
+        quests2 = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests2
+    
 async def get_datak(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
@@ -139,7 +157,13 @@ async def quest(ctx, areaname = "", *, reward):
 
     print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
 
-    if reward == "Kecleon":
+    if reward == "Mega":
+        embed = discord.Embed(title=bot.locale['mega'], description=text)
+    elif reward == "Stardust":
+        embed = discord.Embed(title=bot.locale['stardust'], description=text)
+    elif reward == "stardust":
+        embed = discord.Embed(title=bot.locale['stardust'], description=text)
+    elif reward == "Kecleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
     elif reward == "kecleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
@@ -153,6 +177,7 @@ async def quest(ctx, areaname = "", *, reward):
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
     else:
         embed = discord.Embed(title=bot.locale['quests'], description=text)
+    embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     message = await ctx.send(embed=embed)
     
@@ -172,15 +197,19 @@ async def quest(ctx, areaname = "", *, reward):
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
         elif mon.name == "Coins":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
+        elif mon.name == "Stardust":
+            embed.title = f"{mon.name} {bot.locale['stardust']} - {area[1]}"
         else:
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
         mons.append(mon.id)
     
-    await message.edit(embed=embed)
     if not item_found and mon.name == "Kecleon":
         quests = await get_datak(area)
     elif not item_found and mon.name == "Coins":
         quests = await get_datacoin(area)
+    elif not item_found and mon.name == "Stardust":       
+        quests = await get_datastar(area)
+        quests2 = await get_alt_datastar(area)
     else:
         quests = await get_data(area)
         quests2 = await get_alt_data(area)
@@ -244,6 +273,53 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     text = text + entry
                     length = length + len(entry)
+    elif not item_found and mon.name == "Stardust":
+        for quest_reward_amount, quest_text, lat, lon, stop_name, stop_id in quests:
+            found_rewards = True
+            amount = quest_reward_amount
+            mon_id = 99998
+            emote_name = f"s{amount}"
+            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border/rewards/reward_stardust.png"
+            if found_rewards:
+                if len(stop_name) >= 31:
+                    stop_name = stop_name[0:30]
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+                entry = f"[{stop_name} **{amount}**]({map_url})\n"
+                if length + len(entry) >= 2048:
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
+        for alternative_quest_reward_amount, alternative_quest_text, lat, lon, stop_name, stop_id in quests2:
+            found_rewards = True
+            amount = alternative_quest_reward_amount
+            mon_id = 99998
+            emote_name = f"s{amount}"
+            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border/rewards/reward_stardust.png"
+            if found_rewards:
+                if len(stop_name) >= 22:
+                    stop_name = stop_name[0:21]
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+                entry = f"[{stop_name} **{amount}-NO AR**]({map_url})\n"
+                if length + len(entry) >= 2048:
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
     else:
         for quest_json, quest_text, lat, lon, stop_name, stop_id in quests:
             quest_json = json.loads(quest_json)
@@ -258,17 +334,12 @@ async def quest(ctx, areaname = "", *, reward):
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
-            elif mon.name == "Coins":
-                reward_mons.append([mon_id, lat, lon])
-                emote_name = f"m{mon_id}"
-                emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png"
             elif mon_id in mons:
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
             else:
                 found_rewards = False
-    
             if found_rewards:
                 if len(stop_name) >= 31:
                     stop_name = stop_name[0:30]
@@ -309,7 +380,6 @@ async def quest(ctx, areaname = "", *, reward):
                 emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
             else:
                 found_alt_rewards = False
-    
             if found_alt_rewards:
                 if len(stop_name) >= 26:
                     stop_name = stop_name[0:25]
@@ -327,7 +397,6 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     text = text + entry
                     length = length + len(entry)
-                
     embed.description = text
     image = "https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png"
     if length > 0:
@@ -360,6 +429,26 @@ async def quest(ctx, areaname = "", *, reward):
                     bot.custom_emotes.pop(emote_name)
 
             elif bot.config['static_provider'] == "tileserver":
+                guild = await bot.fetch_guild(bot.config['host_server'])
+                existing_emotes = await guild.fetch_emojis()
+                emote_exist = False
+                for existing_emote in existing_emotes:
+                    if emote_name == existing_emote.name:
+                        emote_exist = True
+                if not emote_exist:
+                    try:
+                        image = await Admin.download_url("", emote_img)
+                        emote = await guild.create_custom_emoji(name=emote_name, image=image)
+                        emote_ref = f"<:{emote.name}:{emote.id}>"
+
+                        if emote_name in bot.custom_emotes:
+                            bot.custom_emotes[emote_name] = emote_ref
+                        else:
+                            bot.custom_emotes.update({emote_name: emote_ref})
+                    except Exception as err:
+                        print(err)
+                        print(f"Error while importing emote {emote_name}")
+
                 image = await bot.static_map.quest(lat_list, lon_list, reward_items, reward_mons, bot.custom_emotes)
     else:
         embed.description = bot.locale["no_quests_found"]
