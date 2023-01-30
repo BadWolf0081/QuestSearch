@@ -187,6 +187,9 @@ async def quest(ctx, areaname = "", *, reward):
     loading = bot.locale['loading_quests']
 
     area = get_area(areaname)
+    if area[1] == "Unknown Area":
+        footer_text = area[1]
+        loading = f"{footer_text}"
     if not area[1] == bot.locale['all']:
         footer_text = area[1]
         loading = f"{loading} • {footer_text}"
@@ -222,7 +225,7 @@ async def quest(ctx, areaname = "", *, reward):
     item_found = False
     for item_id in bot.items:
         if bot.items[item_id]["name"].lower() == reward.lower():
-            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png")
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png")
             embed.title = f"{bot.items[item_id]['name']} {bot.locale['quests']} - {area[1]}"
             items.append(int(item_id))
             item_found = True
@@ -232,25 +235,25 @@ async def quest(ctx, areaname = "", *, reward):
         mon = details(reward, bot.config['mon_icon_repo'], bot.config['language'])
         if reward.startswith("Mega") or reward.startswith("mega"):
             embed.title = f"{mon.name} {bot.locale['mega']} - {area[1]}"
-            embed.set_thumbnail(url=f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/mega_resource/{str(mon.id)}.png")
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png")
             quests = await get_datamega(area)
             quests2 = await get_alt_datamega(area)
         elif mon.name == "Kecleon":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
-            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png")
             quests = await get_datak(area)
         elif mon.name == "Coins":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
-            embed.set_thumbnail(url=f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png")
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/event_coin.png")
             quests = await get_datacoin(area)
         elif mon.name == "Stardust":
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
-            embed.set_thumbnail(url=f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/stardust/0.png")
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/stardust/0.png")
             quests = await get_datastar(area)
             quests2 = await get_alt_datastar(area)
         else:
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
-            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png")
             quests = await get_data(area)
             quests2 = await get_alt_data(area)
         mons.append(mon.id)
@@ -269,7 +272,7 @@ async def quest(ctx, areaname = "", *, reward):
             mon_id = 352
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"m{mon_id}"
-            emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
+            emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png"
     
             if found_rewards:
                 if len(stop_name)+len(end) >= 26:
@@ -297,7 +300,7 @@ async def quest(ctx, areaname = "", *, reward):
             mon_id = 99999
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"m{mon_id}"
-            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png"
+            emote_img = f"{bot.config['mon_icon_repo']}misc/event_coin.png"
     
             if found_rewards:
                 if len(stop_name)+len(end) >= 26:
@@ -325,7 +328,7 @@ async def quest(ctx, areaname = "", *, reward):
             mon_id = 99998
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"s{amount}"
-            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/stardust/0.png"
+            emote_img = f"{bot.config['mon_icon_repo']}reward/stardust/0.png"
             if found_rewards:
                 if len(stop_name) >= 31:
                     stop_name = stop_name[0:30]
@@ -351,7 +354,7 @@ async def quest(ctx, areaname = "", *, reward):
             mon_id = 99998
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"s{amount}"
-            emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/stardust/0.png"
+            emote_img = f"{bot.config['mon_icon_repo']}reward/stardust/0.png"
             if found_rewards:
                 if len(stop_name) >= 22:
                     stop_name = stop_name[0:21]
@@ -385,16 +388,16 @@ async def quest(ctx, areaname = "", *, reward):
             if item_id in items:
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
+                emote_img = f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png"
             elif mon_id in mons and reward.startswith("Mega") or mon_id in mons and reward.startswith("mega"):
                 reward_items = 99997
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"e{mon_id}"
-                emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/mega_resource/{str(mon.id)}.png"
+                emote_img = f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png"
             elif mon_id in mons:
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
+                emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png"
             else:
                 found_rewards = False
             if found_rewards:
@@ -432,16 +435,16 @@ async def quest(ctx, areaname = "", *, reward):
             if item_id in items:
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
+                emote_img = f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png"
             elif mon_id in mons and reward.startswith("Mega") or mon_id in mons and reward.startswith("mega"):
                 reward_items = 99997
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"e{mon_id}"
-                emote_img = f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/mega_resource/{str(mon.id)}.png"
+                emote_img = f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png"
             elif mon_id in mons:
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon_id).zfill(3)}_00.png"
+                emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png"
             else:
                 found_alt_rewards = False
             if found_alt_rewards:
