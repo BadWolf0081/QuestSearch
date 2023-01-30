@@ -378,6 +378,7 @@ async def quest(ctx, areaname = "", *, reward):
         for quest_json, quest_text, lat, lon, stop_name, stop_id in quests:
             quest_json = json.loads(quest_json)
             found_rewards = True
+            shiny = False
             mon_id = 0
             item_id = 0
             if 'pokemon_id' in quest_json[0]["info"]:
@@ -385,6 +386,8 @@ async def quest(ctx, areaname = "", *, reward):
             if 'item_id' in quest_json[0]["info"]:
                     item_id = quest_json[0]["info"]["item_id"]
                     amount = quest_json[0]["info"]["amount"]
+            if 'shiny' in quest_json[0]["info"]:
+                    shiny = quest_json[0]["info"]["shiny"]
             if item_id in items:
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
@@ -394,6 +397,10 @@ async def quest(ctx, areaname = "", *, reward):
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"e{mon_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png"
+            elif mon_id in mons and shiny:
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"m{mon_id}"
+                emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png"
             elif mon_id in mons:
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
@@ -413,18 +420,31 @@ async def quest(ctx, areaname = "", *, reward):
 
                 if item_id in items:
                     entry = f"[{stop_name} **{amount}**]({map_url})\n"
+                elif shiny:
+                    entry = f"[{stop_name} **SHINY**]({map_url})\n"
+                    embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png")
+                    embed.title = f"{mon.name} Quests SHINY DETECTED!! - {area[1]}"
                 else:
                     entry = f"[{stop_name}]({map_url})\n"
                 if length + len(entry) >= 2400:
-                    theend = f"and more..."
-                    text = text + theend
-                    break
+                    if shiny:
+                        text = entry + text
+                        length = length + len(entry)
+                    else:
+                        theend = f" lots more ..."
+                        text = text + theend
+                        break
                 else:
-                    text = text + entry
-                    length = length + len(entry)
+                    if shiny:
+                        text = entry + text
+                        length = length + len(entry)
+                    else:
+                        text = text + entry
+                        length = length + len(entry)
         for alternative_quest_json, alternative_quest_text, lat, lon, stop_name, stop_id in quests2:
             quest_json = json.loads(alternative_quest_json)
             found_alt_rewards = True
+            shiny = False
             mon_id = 0
             item_id = 0
             if 'pokemon_id' in quest_json[0]["info"]:
@@ -432,6 +452,8 @@ async def quest(ctx, areaname = "", *, reward):
             if 'item_id' in quest_json[0]["info"]:
                     item_id = quest_json[0]["info"]["item_id"]
                     amount = quest_json[0]["info"]["amount"]
+            if 'shiny' in quest_json[0]["info"]:
+                    shiny = quest_json[0]["info"]["shiny"]
             if item_id in items:
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
@@ -441,6 +463,10 @@ async def quest(ctx, areaname = "", *, reward):
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"e{mon_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png"
+            elif mon_id in mons and shiny:
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"m{mon_id}"
+                emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png"
             elif mon_id in mons:
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
@@ -460,15 +486,27 @@ async def quest(ctx, areaname = "", *, reward):
 
                 if item_id in items:
                     entry = f"[{stop_name} **{amount}-NO AR**]({map_url})\n"
+                elif shiny:
+                    entry = f"[{stop_name} **SHINY-NO AR**]({map_url})\n"
+                    embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png")
+                    embed.title = f"{mon.name} Quests SHINY DETECTED!! - {area[1]}"
                 else:
                     entry = f"[{stop_name} **NO AR**]({map_url})\n"
                 if length + len(entry) >= 2400:
-                    theend = f" lots more ..."
-                    text = text + theend
-                    break
+                    if shiny:
+                        text = entry + text
+                        length = length + len(entry)
+                    else:
+                        theend = f" lots more ..."
+                        text = text + theend
+                        break
                 else:
-                    text = text + entry
-                    length = length + len(entry)
+                    if shiny:
+                        text = entry + text
+                        length = length + len(entry)
+                    else:
+                        text = text + entry
+                        length = length + len(entry)
     embed.description = text
     image = "https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png"
     if length > 0:
