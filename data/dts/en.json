@@ -39,8 +39,8 @@
     "pokemon_seen_today": "Pokémon seen today",
 	"quests": "Quests",
 	"eventstop": "Pokéstops",
-	"mega": "Mega Candy",
-	"stardust": "Stardust",
+	"mega": "Mega Energy",
+	"stardust": "Quests",
     "grunts": "Grunts",
     "leaders": "Leaders",
     "moves": "Moves",
@@ -50,6 +50,7 @@
     "egg": "Egg",
     "loading_quests": "Loading Quests",
     "no_quests_found": "❌ No Quests were found",
+    "no_area_found": "❌ No Areas were found that match your request. \n Please type !q AREA (pokemon/item) using an area from the list of searchable areas.",
 	"average_iv": "📊 Average IV",
 	"average_iv_of_active_mons": "📊 Average IV of active Pokémon"
 }
