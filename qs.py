@@ -67,7 +67,7 @@ async def get_data(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_type IS NOT NULL AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 7 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
@@ -76,7 +76,43 @@ async def get_alt_data(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_type IS NOT NULL AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_item_id ASC, alternative_quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 7 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_item_id ASC, alternative_quest_pokemon_id ASC, name;")
+        quests2 = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests2
+    
+async def get_dataitem(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 2 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
+        quests = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests
+    
+async def get_alt_dataitem(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 2 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_item_id ASC, alternative_quest_pokemon_id ASC, name;")
+        quests2 = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests2
+    
+async def get_datamega(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 12 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
+        quests = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests
+    
+async def get_alt_datamega(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 12 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_item_id ASC, alternative_quest_pokemon_id ASC, name;")
         quests2 = await cur.fetchall()
     await conn.ensure_closed()
     return quests2
@@ -157,7 +193,7 @@ async def quest(ctx, areaname = "", *, reward):
 
     print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
 
-    if reward.startswith("Mega"):
+    if reward.startswith("Mega") or reward.startswith("mega"):
         embed = discord.Embed(title=bot.locale['mega'], description=text)
     elif reward == "Stardust":
         embed = discord.Embed(title=bot.locale['quests'], description=text)
@@ -190,36 +226,35 @@ async def quest(ctx, areaname = "", *, reward):
             embed.title = f"{bot.items[item_id]['name']} {bot.locale['quests']} - {area[1]}"
             items.append(int(item_id))
             item_found = True
+            quests = await get_dataitem(area)
+            quests2 = await get_alt_dataitem(area)
     if not item_found:
         mon = details(reward, bot.config['mon_icon_repo'], bot.config['language'])
-        if reward.startswith("Mega"):
+        if reward.startswith("Mega") or reward.startswith("mega"):
             embed.title = f"{mon.name} {bot.locale['mega']} - {area[1]}"
             embed.set_thumbnail(url=f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/mega_resource/{str(mon.id)}.png")
+            quests = await get_datamega(area)
+            quests2 = await get_alt_datamega(area)
         elif mon.name == "Kecleon":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
+            quests = await get_datak(area)
         elif mon.name == "Coins":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
             embed.set_thumbnail(url=f"https://raw.githubusercontent.com/whitewillem/PogoAssets/153b88818f5cfc6e5f6fb6515b807658413bda62/uicons-outline/misc/event_coin.png")
+            quests = await get_datacoin(area)
         elif mon.name == "Stardust":
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
             embed.set_thumbnail(url=f"https://raw.githubusercontent.com/whitewillem/PogoAssets/main/uicons-outline/reward/stardust/0.png")
+            quests = await get_datastar(area)
+            quests2 = await get_alt_datastar(area)
         else:
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon_icon_{str(mon.id).zfill(3)}_00.png")
+            quests = await get_data(area)
+            quests2 = await get_alt_data(area)
         mons.append(mon.id)
     
-    if not item_found and mon.name == "Kecleon":
-        quests = await get_datak(area)
-    elif not item_found and mon.name == "Coins":
-        quests = await get_datacoin(area)
-    elif not item_found and mon.name == "Stardust":       
-        quests = await get_datastar(area)
-        quests2 = await get_alt_datastar(area)
-    else:
-        quests = await get_data(area)
-        quests2 = await get_alt_data(area)
-
     length = 0
     reward_mons = list()
     reward_items = list()
@@ -350,7 +385,7 @@ async def quest(ctx, areaname = "", *, reward):
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
-            elif mon_id in mons and reward.startswith("Mega"):
+            elif mon_id in mons and reward.startswith("Mega") or mon_id in mons and reward.startswith("mega"):
                 reward_items = 99997
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"e{mon_id}"
@@ -393,7 +428,7 @@ async def quest(ctx, areaname = "", *, reward):
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
                 emote_img = f"{bot.config['mon_icon_repo']}rewards/reward_{item_id}_1.png"
-            elif mon_id in mons and reward.startswith("Mega"):
+            elif mon_id in mons and reward.startswith("Mega") or mon_id in mons and reward.startswith("mega"):
                 reward_items = 99997
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"e{mon_id}"
