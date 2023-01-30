@@ -67,7 +67,7 @@ async def get_data(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 7 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 7 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_pokemon_id ASC, name;")
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
@@ -76,7 +76,7 @@ async def get_alt_data(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 7 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_item_id ASC, alternative_quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 7 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_pokemon_id ASC, name;")
         quests2 = await cur.fetchall()
     await conn.ensure_closed()
     return quests2
@@ -85,7 +85,7 @@ async def get_dataitem(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 2 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_item_id ASC, quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 2 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_reward_amount DESC, name;")
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
@@ -94,7 +94,7 @@ async def get_alt_dataitem(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 2 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_item_id ASC, alternative_quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT alternative_quest_rewards, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 2 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_reward_amount DESC, name;")
         quests2 = await cur.fetchall()
     await conn.ensure_closed()
     return quests2
@@ -381,6 +381,7 @@ async def quest(ctx, areaname = "", *, reward):
                     mon_id = quest_json[0]["info"]["pokemon_id"]
             if 'item_id' in quest_json[0]["info"]:
                     item_id = quest_json[0]["info"]["item_id"]
+                    amount = quest_json[0]["info"]["amount"]
             if item_id in items:
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
@@ -407,7 +408,10 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
-                entry = f"[{stop_name}]({map_url})\n"
+                if item_id in items:
+                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
+                else:
+                    entry = f"[{stop_name}]({map_url})\n"
                 if length + len(entry) >= 2400:
                     theend = f"and more..."
                     text = text + theend
@@ -424,6 +428,7 @@ async def quest(ctx, areaname = "", *, reward):
                     mon_id = quest_json[0]["info"]["pokemon_id"]
             if 'item_id' in quest_json[0]["info"]:
                     item_id = quest_json[0]["info"]["item_id"]
+                    amount = quest_json[0]["info"]["amount"]
             if item_id in items:
                 reward_items.append([item_id, lat, lon])
                 emote_name = f"i{item_id}"
@@ -450,7 +455,10 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
-                entry = f"[{stop_name} **NO AR**]({map_url})\n"
+                if item_id in items:
+                    entry = f"[{stop_name} **{amount}-NO AR**]({map_url})\n"
+                else:
+                    entry = f"[{stop_name} **NO AR**]({map_url})\n"
                 if length + len(entry) >= 2400:
                     theend = f" lots more ..."
                     text = text + theend
