@@ -1,0 +1,16 @@
+{
+  "name": "QuestSearch",
+  "version": "0.0.9",
+  "description": "Discord Bot for searching RDM database for Quests and Special Encounters",
+  "keywords": [
+    "questsearch",
+    "discordopole",
+    "discord",
+    "pokemon"
+  ],
+  "homepage": "https://github.com/BadWolf0081/QuestSearch",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BadWolf0081/QuestSearch.git"
+  }
+}
