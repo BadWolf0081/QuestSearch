@@ -210,5 +210,9 @@
     "1405": {
       "protoname": "ITEM_FRIEND_GIFT_BOX",
       "name": "Gift"
+    },
+    "1501": {
+      "protoname": "MYSTERIOUS_COMPONENT",
+      "name": "Mysterious Component"
     }
   }
