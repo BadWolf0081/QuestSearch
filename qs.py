@@ -121,7 +121,7 @@ async def get_datastar(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT quest_reward_amount, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 3 AND quest_reward_amount >= 501 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_reward_amount DESC, quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT quest_reward_amount, quest_template, lat, lon, name, id FROM pokestop WHERE quest_reward_type = 3 AND quest_reward_amount >= 999 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_reward_amount DESC, name;")
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
@@ -130,7 +130,7 @@ async def get_alt_datastar(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT alternative_quest_reward_amount, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 3 AND alternative_quest_reward_amount >= 501 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_reward_amount DESC, quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT alternative_quest_reward_amount, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 3 AND alternative_quest_reward_amount >= 999 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_reward_amount DESC, name;")
         quests2 = await cur.fetchall()
     await conn.ensure_closed()
     return quests2
@@ -165,8 +165,8 @@ def isUser(role_ids, channel_id):
         return False
 
 def get_area(areaname):
-    stringfence = "-100 -100, -100 100, 100 100, 100 -100, -100 -100"
-    namefence = bot.locale['all']
+    stringfence = "-1 -1, -1 1, 1 1, 1 -1, -1 -1"
+    namefence = bot.locale['unknown']
     for area in bot.geofences:
         if area['name'].lower() == areaname.lower():
             namefence = area['name'].title()
@@ -187,44 +187,66 @@ async def quest(ctx, areaname = "", *, reward):
     loading = bot.locale['loading_quests']
 
     area = get_area(areaname)
-    if area[1] == "Unknown Area":
-        footer_text = area[1]
-        loading = f"{footer_text}"
     if not area[1] == bot.locale['all']:
         footer_text = area[1]
         loading = f"{loading} • {footer_text}"
 
     print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
 
-    if reward.startswith("Mega") or reward.startswith("mega"):
+    if area[1] == "Unknown Area":
+        embed = discord.Embed(title=bot.locale['no_area_found'], description=text)
+    elif reward.startswith("Mega") or reward.startswith("mega"):
         embed = discord.Embed(title=bot.locale['mega'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "Stardust":
         embed = discord.Embed(title=bot.locale['quests'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "stardust":
         embed = discord.Embed(title=bot.locale['quests'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "Kecleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "kecleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "keckleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "Keckleon":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "Coins":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "coins":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     else:
         embed = discord.Embed(title=bot.locale['quests'], description=text)
-    embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     message = await ctx.send(embed=embed)
     
     items = list()
     mons = list()
     item_found = False
     for item_id in bot.items:
-        if bot.items[item_id]["name"].lower() == reward.lower():
+        if area[1] == "Unknown Area":
+            footer_text = area[1]
+            loading = f"{footer_text}"
+            embed.description = bot.locale["no_area_found"]
+            item_found = True
+        elif bot.items[item_id]["name"].lower() == reward.lower():
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png")
             embed.title = f"{bot.items[item_id]['name']} {bot.locale['quests']} - {area[1]}"
             items.append(int(item_id))
@@ -267,7 +289,10 @@ async def quest(ctx, areaname = "", *, reward):
     embed.description = text
     if not item_found and mon.name == "Kecleon":
         for lat, lon, stop_name, stop_id, expiration in quests:
-            end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
+            tstamp1 = datetime.fromtimestamp(expiration)
+            tstamp2 = datetime.now()
+            td = tstamp1 - tstamp2
+            left = int(round(td.total_seconds() / 60))
             found_rewards = True
             mon_id = 352
             reward_mons.append([mon_id, lat, lon])
@@ -275,7 +300,7 @@ async def quest(ctx, areaname = "", *, reward):
             emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png"
     
             if found_rewards:
-                if len(stop_name)+len(end) >= 26:
+                if len(stop_name) >= 26:
                     stop_name = stop_name[0:25]
                 lat_list.append(lat)
                 lon_list.append(lon)
@@ -285,7 +310,7 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
-                entry = f"[{stop_name} **{end}**]({map_url})\n"
+                entry = f"[{stop_name} - **{left} Min**]({map_url})\n"
                 if length + len(entry) >= 2400:
                     theend = f"and more..."
                     text = text + theend
