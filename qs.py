@@ -310,7 +310,7 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
-                entry = f"[{stop_name} - **{left} Min**]({map_url})\n"
+                entry = f"[{stop_name}-**{left} Min**]({map_url})\n"
                 if length + len(entry) >= 2400:
                     theend = f"and more..."
                     text = text + theend
