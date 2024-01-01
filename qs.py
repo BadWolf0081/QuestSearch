@@ -136,7 +136,7 @@ async def get_alt_datastar(area):
     return quests2
     
 async def get_datak(area):
-    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db='golbat',port=config['db_port'])    
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
         await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration FROM pokestop, incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =8 AND incident.expiration >= UNIX_TIMESTAMP()+300 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY incident.expiration DESC;")
@@ -144,7 +144,7 @@ async def get_datak(area):
     await conn.ensure_closed()
     return quests
 async def get_datashow(area):
-    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db='golbat',port=config['db_port'])    
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
         await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration FROM pokestop, incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =9 AND incident.expiration >= UNIX_TIMESTAMP()+300 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY incident.expiration DESC;")
