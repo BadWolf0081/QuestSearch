@@ -143,11 +143,12 @@ async def get_datak(area):
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
+    
 async def get_datashow(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration FROM pokestop, incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =9 AND incident.expiration >= UNIX_TIMESTAMP()+300 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY incident.expiration DESC;")
+        await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id FROM pokestop, incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =9 AND incident.expiration >= UNIX_TIMESTAMP()+300 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY incident.expiration DESC;")
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
@@ -207,6 +208,10 @@ async def quest(ctx, areaname = "", *, reward):
         embed = discord.Embed(title=bot.locale['mega'], description=text)
         embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
         embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+    elif reward.startswith("Showcase") or reward.startswith("showcase"):
+        embed = discord.Embed(title=bot.locale['showcase'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "Stardust":
         embed = discord.Embed(title=bot.locale['quests'], description=text)
         embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
@@ -216,10 +221,6 @@ async def quest(ctx, areaname = "", *, reward):
         embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
         embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
     elif reward == "Kecleon":
-        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward == "Showcase":
         embed = discord.Embed(title=bot.locale['eventstop'], description=text)
         embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
         embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
@@ -272,14 +273,14 @@ async def quest(ctx, areaname = "", *, reward):
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png")
             quests = await get_datamega(area)
             quests2 = await get_alt_datamega(area)
+        elif reward.startswith("Showcase") or reward.startswith("showcase"):
+            embed.title = f"{mon.name} {bot.locale['showcase']} - {area[1]}"
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/showcase.png")
+            quests = await get_datashow(area)
         elif mon.name == "Kecleon":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png")
             quests = await get_datak(area)
-        elif mon.name == "Showcase":
-            embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
-            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/showcase.png")
-            quests = await get_datashow(area)
         elif mon.name == "Coins":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/event_coin.png")
@@ -362,34 +363,6 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     text = text + entry
                     length = length + len(entry)
-    elif not item_found and mon.name == "Showcase":
-        for lat, lon, stop_name, stop_id, expiration in quests:
-            end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
-            found_rewards = True
-            mon_id = 99997
-            reward_mons.append([mon_id, lat, lon])
-            emote_name = f"m{mon_id}"
-            emote_img = f"{bot.config['mon_icon_repo']}misc/showcase.png"
-    
-            if found_rewards:
-                if len(stop_name)+len(end) >= 26:
-                    stop_name = stop_name[0:25]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                entry = f"[{stop_name}]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f"and more..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
     elif not item_found and mon.name == "Stardust":
         for quest_reward_amount, quest_text, lat, lon, stop_name, stop_id in quests:
             found_rewards = True
@@ -443,6 +416,50 @@ async def quest(ctx, areaname = "", *, reward):
                 else:
                     text = text + entry
                     length = length + len(entry)
+    elif reward.startswith("Showcase") or reward.startswith("showcase"):
+        for lat, lon, stop_name, stop_id in quests:
+            found_rewards = True
+            shiny = False
+            mon_id = 0
+            item_id = 0
+            reward_items = 99996
+            reward_mons.append([mon_id, lat, lon])
+            emote_name = f"e{mon_id}"
+            emote_img = f"{bot.config['mon_icon_repo']}misc/showcase.png"
+            if found_rewards:
+                if len(stop_name) >= 31:
+                    stop_name = stop_name[0:30]
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+                if item_id in items:
+                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
+                elif shiny:
+                    entry = f"[{stop_name} **SHINY**]({map_url})\n"
+                    embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png")
+                    embed.title = f"{mon.name} Quests SHINY DETECTED!! - {area[1]}"
+                else:
+                    entry = f"[{stop_name}]({map_url})\n"
+                if length + len(entry) >= 2400:
+                    if shiny:
+                        text = entry + text
+                        length = length + len(entry)
+                    else:
+                        theend = f" lots more ..."
+                        text = text + theend
+                        break
+                else:
+                    if shiny:
+                        text = entry + text
+                        length = length + len(entry)
+                    else:
+                        text = text + entry
+                        length = length + len(entry)
     else:
         for quest_json, quest_text, lat, lon, stop_name, stop_id in quests:
             quest_json = json.loads(quest_json)

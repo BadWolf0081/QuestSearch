@@ -78,6 +78,9 @@ class static_map:
             if items ==99997:
                 for mon_id, mon_lat, mon_lon in mons:
                      data["markers"].append({"url": f"{self.icons}reward/mega_resource/{str(mon_id)}.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+            elif items ==99996:
+                for mon_id, mon_lat, mon_lon in mons:
+                     data["markers"].append({"url": f"{self.icons}misc/showcase.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
             else:
                 for mon_id, mon_lat, mon_lon in mons:
                     if mon_id ==99997:
