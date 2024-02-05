@@ -81,12 +81,13 @@ class static_map:
             elif items ==99996:
                 for mon_id, mon_lat, mon_lon in mons:
                      data["markers"].append({"url": f"{self.icons}misc/showcase.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+            elif items ==99994:
+                for mon_id, mon_lat, mon_lon in mons:
+                     data["markers"].append({"url": f"{self.icons}misc/route-start.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
             else:
                 for mon_id, mon_lat, mon_lon in mons:
-                    if mon_id ==99997:
-                        data["markers"].append({"url": f"{self.icons}reward/stardust/0.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
                     if mon_id ==99998:
-                        data["markers"].append({"url": f"{self.icons}misc/showcase.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+                        data["markers"].append({"url": f"{self.icons}reward/stardust/0.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
                     else:
                         data["markers"].append({"url": f"{self.icons}pokemon/{str(mon_id)}.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
                 for item_id, item_lat, item_lon in items:
