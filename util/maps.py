@@ -84,6 +84,21 @@ class static_map:
             elif items ==99994:
                 for mon_id, mon_lat, mon_lon in mons:
                      data["markers"].append({"url": f"{self.icons}misc/route-start.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+            elif items ==99993:
+                for mon_id, mon_lat, mon_lon, lure_id in mons:
+                     data["markers"].append({"url": f"{self.icons}pokestop/{lure_id}.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+            elif items ==99944:
+                for mon_id, mon_lat, mon_lon in mons:
+                     data["markers"].append({"url": f"{self.icons}invasion/44.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+            elif items ==99943:
+                for mon_id, mon_lat, mon_lon in mons:
+                     data["markers"].append({"url": f"{self.icons}invasion/43.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+            elif items ==99942:
+                for mon_id, mon_lat, mon_lon in mons:
+                     data["markers"].append({"url": f"{self.icons}invasion/42.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+            elif items ==99941:
+                for mon_id, mon_lat, mon_lon in mons:
+                     data["markers"].append({"url": f"{self.icons}invasion/41.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
             else:
                 for mon_id, mon_lat, mon_lon in mons:
                     if mon_id ==99998:

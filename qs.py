@@ -81,14 +81,32 @@ async def get_lures(area):
     await conn.ensure_closed()
     return quests
     
-async def get_datarocketquery(area, mon_id):
+async def get_datarocket(area, mon_id):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_pokemon_id = {mon_id} AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_pokemon_id ASC, name;")
+        await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration, incident.character FROM pokestop, incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =1 AND incident.expiration >= UNIX_TIMESTAMP() AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY incident.character ASC, pokestop.name;")
         quests = await cur.fetchall()
     await conn.ensure_closed()
-    return rocket_return
+    return quests
+    
+async def get_datagiovani(area):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration, incident.character FROM pokestop, incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =3 AND incident.expiration >= UNIX_TIMESTAMP() AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY incident.expiration ASC, pokestop.name;")
+        quests = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests
+    
+async def get_dataleaders(area, char_id):
+    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])
+    cur = await conn.cursor()
+    async with conn.cursor() as cur:
+        await cur.execute(f"SELECT pokestop.lat, pokestop.lon, pokestop.name, pokestop.id, incident.expiration, incident.character FROM pokestop, incident WHERE pokestop.id = incident.pokestop_id AND incident.display_type =2 AND incident.character={char_id} AND incident.expiration >= UNIX_TIMESTAMP() AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) ORDER BY incident.expiration ASC, pokestop.name;")
+        quests = await cur.fetchall()
+    await conn.ensure_closed()
+    return quests
 
 async def get_alt_data(area, mon_id):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])
@@ -243,6 +261,18 @@ async def quest(ctx, areaname = "", *, reward):
         embed = discord.Embed(title=bot.locale['showcase'], description=text)
         embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
         embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+    elif reward.startswith("Giovan") or reward.startswith("giovan"):
+        embed = discord.Embed(title=bot.locale['giovani'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+    elif reward.startswith("Leader") or reward.startswith("leader"):
+        embed = discord.Embed(title=bot.locale['leaders'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+    elif reward.startswith("rocket") or reward.startswith("Rocket") or reward.startswith("invasion"):
+        embed = discord.Embed(title=bot.locale['rocket'], description=text)
+        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")        
     elif reward == "Stardust":
         embed = discord.Embed(title=bot.locale['quests'], description=text)
         embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
@@ -320,6 +350,26 @@ async def quest(ctx, areaname = "", *, reward):
             embed.title = f"{bot.locale['routes']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/route-start.png")
             quests = await get_dataroute(area)
+        elif reward.startswith("Giovan") or reward.startswith("giovan"):
+            embed.title = f"{bot.locale['giovani']} - {area[1]}"
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/44.png")
+            quests = await get_datagiovani(area)
+        elif reward.startswith("Sierra") or reward.startswith("sierra"):
+            embed.title = f"{bot.locale['leaders']} - {area[1]}"
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/43.png")
+            quests = await get_dataleaders(area, 43)
+        elif reward.startswith("Arlo") or reward.startswith("arlo"):
+            embed.title = f"{bot.locale['leaders']} - {area[1]}"
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/42.png")
+            quests = await get_dataleaders(area, 42)
+        elif reward.startswith("Cliff") or reward.startswith("cliff"):
+            embed.title = f"{bot.locale['leaders']} - {area[1]}"
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/41.png")
+            quests = await get_dataleaders(area, 41)
+        elif reward.startswith("rocket") or reward.startswith("Rocket") or reward.startswith("invasion"):
+            embed.title = f"{bot.locale['rocket']} - {area[1]}"
+            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokestop/0_i.png")
+            quests = await get_datarocket(area)
         elif mon.name == "Kecleon":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png")
@@ -462,7 +512,6 @@ async def quest(ctx, areaname = "", *, reward):
     elif reward.startswith("Showcase") or reward.startswith("showcase"):
         for lat, lon, stop_name, stop_id in quests:
             found_rewards = True
-            shiny = False
             mon_id = 0
             item_id = 0
             reward_items = 99996
@@ -482,10 +531,6 @@ async def quest(ctx, areaname = "", *, reward):
 
                 if item_id in items:
                     entry = f"[{stop_name} **{amount}**]({map_url})\n"
-                elif shiny:
-                    entry = f"[{stop_name} **SHINY**]({map_url})\n"
-                    embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png")
-                    embed.title = f"{mon.name} Quests SHINY DETECTED!! - {area[1]}"
                 else:
                     entry = f"[{stop_name}]({map_url})\n"
                 if length + len(entry) >= 2400:
@@ -503,6 +548,130 @@ async def quest(ctx, areaname = "", *, reward):
                     else:
                         text = text + entry
                         length = length + len(entry)
+    elif reward.startswith("Giovan") or reward.startswith("giovan"):
+        for lat, lon, stop_name, stop_id, expire, char_id in quests:
+            found_rewards = True
+            mon_id = 0
+            item_id = 0
+            reward_items = 99944
+            reward_mons.append([mon_id, lat, lon])
+            emote_name = f"e{mon_id}"
+            emote_img = f"{bot.config['mon_icon_repo']}invasion/44.png"
+            if found_rewards:
+                if len(stop_name) >= 31:
+                    stop_name = stop_name[0:30]
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+                if item_id in items:
+                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
+                else:
+                    entry = f"[{stop_name}]({map_url})\n"
+                if length + len(entry) >= 2400:
+                    theend = f" lots more ..."
+                    text = text + theend
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
+    elif reward.startswith("Sierra") or reward.startswith("sierra"):
+        for lat, lon, stop_name, stop_id, expire, char_id in quests:
+            found_rewards = True
+            mon_id = 0
+            item_id = 0
+            reward_items = 99943
+            reward_mons.append([mon_id, lat, lon])
+            emote_name = f"e{mon_id}"
+            emote_img = f"{bot.config['mon_icon_repo']}invasion/43.png"
+            if found_rewards:
+                if len(stop_name) >= 31:
+                    stop_name = stop_name[0:30]
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+                if item_id in items:
+                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
+                else:
+                    entry = f"[{stop_name}]({map_url})\n"
+                if length + len(entry) >= 2400:
+                    theend = f" lots more ..."
+                    text = text + theend
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
+    elif reward.startswith("Arlo") or reward.startswith("arlo"):
+        for lat, lon, stop_name, stop_id, expire, char_id in quests:
+            found_rewards = True
+            mon_id = 0
+            item_id = 0
+            reward_items = 99942
+            reward_mons.append([mon_id, lat, lon])
+            emote_name = f"e{mon_id}"
+            emote_img = f"{bot.config['mon_icon_repo']}invasion/42.png"
+            if found_rewards:
+                if len(stop_name) >= 31:
+                    stop_name = stop_name[0:30]
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+                if item_id in items:
+                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
+                else:
+                    entry = f"[{stop_name}]({map_url})\n"
+                if length + len(entry) >= 2400:
+                    theend = f" lots more ..."
+                    text = text + theend
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
+    elif reward.startswith("Cliff") or reward.startswith("cliff"):
+        for lat, lon, stop_name, stop_id, expire, char_id in quests:
+            found_rewards = True
+            mon_id = 0
+            item_id = 0
+            reward_items = 99941
+            reward_mons.append([mon_id, lat, lon])
+            emote_name = f"e{mon_id}"
+            emote_img = f"{bot.config['mon_icon_repo']}invasion/41.png"
+            if found_rewards:
+                if len(stop_name) >= 31:
+                    stop_name = stop_name[0:30]
+                lat_list.append(lat)
+                lon_list.append(lon)
+
+                if bot.config['use_map']:
+                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                else:
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+                if item_id in items:
+                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
+                else:
+                    entry = f"[{stop_name}]({map_url})\n"
+                if length + len(entry) >= 2400:
+                    theend = f" lots more ..."
+                    text = text + theend
+                    break
+                else:
+                    text = text + entry
+                    length = length + len(entry)
     elif reward.startswith("Lure") or reward.startswith("lure"):
         for lure_expire_timestamp, lure_id, lat, lon, stop_name in quests:
             tstamp1 = datetime.fromtimestamp(lure_expire_timestamp)
@@ -513,19 +682,20 @@ async def quest(ctx, areaname = "", *, reward):
             shiny = False
             mon_id = 0
             item_id = 0
-            reward_items = 99996
+            reward_items = 99993
+            reward_mons.append([mon_id, lat, lon, lure_id])
             emote_name = f"e{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}pokestop/501.png"
             if lure_id == 501:
                 luretype= "Normal"
             elif lure_id == 502:
-                luretype= "Ice"
+                luretype= "Glacial"
             elif lure_id == 503:
-                luretype= "Grass"
+                luretype= "Mossy"
             elif lure_id == 504:
-                luretype= "Electric"
+                luretype= "Magnetic"
             elif lure_id == 505:
-                luretype= "Water"
+                luretype= "Rainy"
             elif lure_id == 506:
                 luretype= "Gold"
             if found_rewards:
@@ -535,7 +705,7 @@ async def quest(ctx, areaname = "", *, reward):
                 lon_list.append(lon)
 
                 if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
+                    map_url = bot.map_url.quest(lat, lon)
                 else:
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
 
