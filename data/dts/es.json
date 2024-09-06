@@ -36,6 +36,7 @@
     "and": "y",
     "stats": "Estadísitcas",
     "today": "hoy",
+	"giovani": "Potential Giovanni Invasions",
     "pokemon_seen_today": "Pokémon vistos hoy",
     "quests": "Misiones",
 	"eventstop": "Pokéstops",
@@ -53,5 +54,6 @@
     "loading_quests": "Cargando misiones",
     "no_quests_found": "❌ No se encontraron misiones",
 	"average_iv": "📊 Average IV",
+	"station": "Power Spot",
 	"average_iv_of_active_mons": "📊 Average IV of active Pokémon"
 }

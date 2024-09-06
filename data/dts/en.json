@@ -57,5 +57,6 @@
     "no_quests_found": "❌ No Quests were found",
     "no_area_found": "❌ No Areas were found that match your request. \n Please type !q AREA (pokemon/item) using an area from the list of searchable areas.",
 	"average_iv": "📊 Average IV",
+	"station": "Power Spot",
 	"average_iv_of_active_mons": "📊 Average IV of active Pokémon"
 }
