@@ -1135,7 +1135,49 @@ async def rocket(ctx, areaname = "", *, reward):
     embed.set_image(url=image)
 
     await message.edit(embed=embed)
-    
+
+@bot.command(pass_context=True)
+async def costume(ctx, *, args):
+    """
+    Usage: !costume <pokemon name> <costume_id>
+    Example: !costume pikachu 001
+    """
+    try:
+        parts = args.strip().split()
+        if len(parts) < 2:
+            await ctx.send("Usage: !costume <pokemon name> <costume_id>")
+            return
+        mon_name = " ".join(parts[:-1])
+        costume_id = parts[-1].zfill(1)
+        mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+        url = f"{bot.config['mon_icon_repo']}{str(mon.id).zfill(1)}_{costume_id}.png"
+        print(f"[COSTUME URL] {url}")
+        await ctx.send(url)
+    except Exception as e:
+        print(f"[COSTUME ERROR] {e}")
+        await ctx.send("Could not find that Pokémon or costume.")
+
+@bot.command(pass_context=True)
+async def form(ctx, *, args):
+    """
+    Usage: !form <pokemon name> <form_id>
+    Example: !form deoxys 0034
+    """
+    try:
+        parts = args.strip().split()
+        if len(parts) < 2:
+            await ctx.send("Usage: !form <pokemon name> <form_id>")
+            return
+        mon_name = " ".join(parts[:-1])
+        form_id = parts[-1].zfill(1)
+        mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+        url = f"{bot.config['mon_icon_repo']}{str(mon.id).zfill(1)}_{form_id}.png"
+        print(f"[FORM URL] {url}")
+        await ctx.send(url)
+    except Exception as e:
+        print(f"[FORM ERROR] {e}")
+        await ctx.send("Could not find that Pokémon or form.")
+
 @bot.event
 async def on_ready():
     print("Connected to Discord. Ready to take commands.")
