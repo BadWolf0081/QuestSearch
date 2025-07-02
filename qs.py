@@ -1015,12 +1015,12 @@ async def costume(ctx, *, args):
         costume_id = None
         if len(parts) > 1 and parts[-1].isdigit():
             mon_name = " ".join(parts[:-1])
-            costume_id = parts[-1].zfill(3)
+            costume_id = parts[-1].zfill(1)
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
         if costume_id:
-            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}_{costume_id}.png"
+            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(1)}_{costume_id}.png"
         else:
-            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}.png"
+            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(1)}.png"
         print(f"[COSTUME URL] {url}")
         await ctx.send(url)
     except Exception as e:
@@ -1043,12 +1043,12 @@ async def form(ctx, *, args):
         form_id = None
         if len(parts) > 1 and parts[-1].isdigit():
             mon_name = " ".join(parts[:-1])
-            form_id = parts[-1].zfill(4)
+            form_id = parts[-1].zfill(1)
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
         if form_id:
-            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}_{form_id}.png"
+            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(1)}_{form_id}.png"
         else:
-            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}.png"
+            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(1)}.png"
         print(f"[FORM URL] {url}")
         await ctx.send(url)
     except Exception as e:
