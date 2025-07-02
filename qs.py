@@ -1002,18 +1002,25 @@ async def quest(ctx, areaname = "", *, reward):
 @bot.command(pass_context=True)
 async def costume(ctx, *, args):
     """
-    Usage: !costume <pokemon name> <costume_id>
+    Usage: !costume <pokemon name> [costume_id]
     Example: !costume pikachu 001
+    If no costume_id is given, returns the default icon.
     """
     try:
         parts = args.strip().split()
-        if len(parts) < 2:
-            await ctx.send("Usage: !costume <pokemon name> <costume_id>")
+        if len(parts) == 0:
+            await ctx.send("Usage: !costume <pokemon name> [costume_id]")
             return
-        mon_name = " ".join(parts[:-1])
-        costume_id = parts[-1].zfill(1)
+        mon_name = " ".join(parts)
+        costume_id = None
+        if len(parts) > 1 and parts[-1].isdigit():
+            mon_name = " ".join(parts[:-1])
+            costume_id = parts[-1].zfill(3)
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
-        url = f"{bot.config['mon_icon_repo']}{str(mon.id).zfill(1)}_{costume_id}.png"
+        if costume_id:
+            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}_{costume_id}.png"
+        else:
+            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}.png"
         print(f"[COSTUME URL] {url}")
         await ctx.send(url)
     except Exception as e:
@@ -1023,18 +1030,25 @@ async def costume(ctx, *, args):
 @bot.command(pass_context=True)
 async def form(ctx, *, args):
     """
-    Usage: !form <pokemon name> <form_id>
+    Usage: !form <pokemon name> [form_id]
     Example: !form deoxys 0034
+    If no form_id is given, returns the default icon.
     """
     try:
         parts = args.strip().split()
-        if len(parts) < 2:
-            await ctx.send("Usage: !form <pokemon name> <form_id>")
+        if len(parts) == 0:
+            await ctx.send("Usage: !form <pokemon name> [form_id]")
             return
-        mon_name = " ".join(parts[:-1])
-        form_id = parts[-1].zfill(1)
+        mon_name = " ".join(parts)
+        form_id = None
+        if len(parts) > 1 and parts[-1].isdigit():
+            mon_name = " ".join(parts[:-1])
+            form_id = parts[-1].zfill(4)
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
-        url = f"{bot.config['mon_icon_repo']}{str(mon.id).zfill(1)}_{form_id}.png"
+        if form_id:
+            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}_{form_id}.png"
+        else:
+            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}.png"
         print(f"[FORM URL] {url}")
         await ctx.send(url)
     except Exception as e:
