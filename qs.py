@@ -1119,7 +1119,7 @@ async def costume(ctx, *, args):
 async def form(ctx, *, args):
     """
     Usage: !form <pokemon name> [form] [shiny]
-    Supports: !form meowth_galarian [shiny]
+    Supports: !form meowth_galarian [shiny] or !form meowth galarian [shiny]
     """
     try:
         parts = args.strip().split()
@@ -1135,14 +1135,14 @@ async def form(ctx, *, args):
             shiny = True
             parts = parts[:-1]
 
-        # Handle meowth_galarian or similar
+        # Try to extract mon_name and form_query
         if len(parts) == 1 and "_" in parts[0]:
             split = parts[0].split("_", 1)
             mon_name = split[0]
             form_query = split[1]
         elif len(parts) > 1:
-            mon_name = " ".join(parts[:-1])
-            form_query = parts[-1]
+            mon_name = parts[0]
+            form_query = " ".join(parts[1:])
         else:
             mon_name = parts[0]
 
@@ -1151,10 +1151,21 @@ async def form(ctx, *, args):
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        form_id, form_name = lookup_form_id_for_mon(mon.id, form_query) if form_query else (0, None)
-        if form_id is None:
-            await ctx.send(f"Could not find form: {form_query}")
-            return
+        form_id = None
+        form_name = None
+
+        # Try full form string (e.g. meowth_galarian)
+        if form_query:
+            full_form = f"{mon_name}_{form_query.replace(' ', '_')}"
+            form_id, form_name = lookup_form_id_for_mon(mon.id, full_form)
+            if form_id == 0 or form_id is None:
+                # Try just the form part (e.g. galarian)
+                form_id, form_name = lookup_form_id_for_mon(mon.id, form_query)
+            if form_id == 0 or form_id is None:
+                # Fallback to default
+                form_id, form_name = 0, None
+        else:
+            form_id, form_name = 0, None
 
         print(f"[COMMAND] Calling get_api_filecode with mon.id={mon.id}, form_id={form_id}, shiny={shiny}")
         filecode = get_api_filecode(mon.id, form_id=form_id, shiny=shiny)
