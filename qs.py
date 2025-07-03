@@ -82,12 +82,14 @@ for row in rows:
         pokedex = re.sub(r"<.*?>", "", cols[1]).strip()
         form = re.sub(r"<.*?>", "", cols[2]).strip()
         costume = re.sub(r"<.*?>", "", cols[3]).strip()
+        mega = re.sub(r"<.*?>", "", cols[4]).strip()
         filecode = re.sub(r"<.*?>", "", cols[5]).strip()
         poke_lookup.append({
             "name": name,
             "pokedex": pokedex,
             "form": form,
             "costume": costume,
+            "mega": mega,
             "filecode": filecode
         })
 
@@ -1143,65 +1145,32 @@ def lookup_costume_id_for_mon(mon_id, costume_query):
 
 @bot.command(pass_context=True)
 async def form(ctx, *, args):
-    """
-    Usage: !form <pokemon name> [form] [shiny]
-    Supports: !form meowth_galarian [shiny] or !form meowth galarian [shiny]
-    """
     try:
         parts = args.strip().split()
         if not parts:
-            await ctx.send("Usage: !form <pokemon name> [form] [shiny]")
+            await ctx.send("Usage: !form <pokemon name> [form] [mega] [shiny]")
             return
-        shiny = False
-        form_query = None
-        mon_name = None
 
-        # Check for shiny at the end
-        if parts and parts[-1].lower() == "shiny":
-            shiny = True
-            parts = parts[:-1]
-
-        # Try to extract mon_name and form_query
-        if len(parts) == 1 and "_" in parts[0]:
-            split = parts[0].split("_", 1)
-            mon_name = split[0]
-            form_query = split[1]
-        elif len(parts) > 1:
-            mon_name = parts[0]
-            form_query = " ".join(parts[1:])
-        else:
-            mon_name = parts[0]
-
+        mon_name, form_query, shiny, mega = parse_mon_args(parts)
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
         if not hasattr(mon, "id") or not mon.id:
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        form_id = None
-        form_name = None
-
-        # Try full form string (e.g. meowth_galarian)
+        form_id = 0
         if form_query:
             full_form = f"{mon_name}_{form_query.replace(' ', '_')}"
-            form_id, form_name = lookup_form_id_for_mon(mon.id, full_form)
+            form_id, _ = lookup_form_id_for_mon(mon.id, full_form)
             if form_id == 0 or form_id is None:
-                # Try just the form part (e.g. galarian)
-                form_id, form_name = lookup_form_id_for_mon(mon.id, form_query)
-            if form_id == 0 or form_id is None:
-                # Fallback to default
-                form_id, form_name = 0, None
-        else:
-            form_id, form_name = 0, None
+                form_id, _ = lookup_form_id_for_mon(mon.id, form_query)
+        mega_id = 1 if mega else None
 
-        print(f"[COMMAND] Calling get_api_filecode with mon.id={mon.id}, form_id={form_id}, shiny={shiny}")
-        filecode = get_api_filecode(mon.id, form_id=form_id, shiny=shiny)
+        filecode = get_api_filecode(mon.id, form_id=form_id, shiny=shiny, mega_id=mega_id)
         if not filecode:
-            print(f"[FORM ERROR] No filecode found for mon.id={mon.id}, form_id={form_id}, shiny={shiny}")
             await ctx.send("Could not find that Pokémon or form (API crossref failed).")
             return
 
         url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
-        print(f"[FORM URL] {url}")
         response = requests.get(url)
         if response.status_code != 200:
             await ctx.send("Could not find that Pokémon or form.")
@@ -1326,18 +1295,17 @@ def fuzzy_lookup_costume_id(query):
                 return int(k.split("_")[1]), forms_data[k]
     return None, None
 
-def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False):
-    print(f"[API FILECODE] Looking up: pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}")
+def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False, mega_id=None):
+    print(f"[API FILECODE] Looking up: pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}, mega_id={mega_id}")
     candidates = []
     for entry in poke_lookup:
-        # Check pokedex_id match
         if f"({pokedex_id})" not in entry["pokedex"]:
             continue
-        # Check form_id if provided
         if form_id and f"({form_id})" not in entry["form"]:
             continue
-        # Check costume_id if provided
         if costume_id and f"({costume_id})" not in entry["costume"]:
+            continue
+        if mega_id is not None and str(mega_id) != entry.get("mega", "0"):
             continue
         filecode = entry["filecode"]
         if not filecode:
@@ -1352,7 +1320,7 @@ def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False):
     if candidates:
         print(f"[API FILECODE] Returning filecode: {candidates[0]}")
         return candidates[0]
-    print(f"[API FILECODE] No candidates found for pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}")
+    print(f"[API FILECODE] No candidates found for pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}, mega_id={mega_id}")
     return None
 
 def lookup_form_id_for_mon(mon_id, form_query):
@@ -1368,6 +1336,39 @@ def lookup_form_id_for_mon(mon_id, form_query):
                 if m:
                     return int(m.group(1)), entry["form"]
     return 0, None  # fallback to default form
+
+def parse_mon_args(parts):
+    shiny = False
+    mega = False
+    form_query = None
+    costume_query = None
+    custom_id = None
+    mon_name = None
+
+
+
+    # Remove shiny if present
+    if parts and parts[-1].lower() == "shiny":
+               shiny = True
+        parts = parts[:-1]
+
+    # Remove mega if present
+    if "mega" in [p.lower() for p in parts]:
+        mega = True
+        parts = [p for p in parts if p.lower() != "mega"]
+
+    # Now parse the rest
+    if len(parts) == 1 and "_" in parts[0]:
+        split = parts[0].split("_", 1)
+        mon_name = split[0]
+        form_query = split[1]
+    elif len(parts) > 1:
+        mon_name = parts[0]
+        form_query = " ".join(parts[1:])
+    else:
+        mon_name = parts[0]
+
+    return mon_name, form_query, shiny, mega
 
 if __name__ == "__main__":
     for extension in extensions:
