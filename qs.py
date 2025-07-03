@@ -77,13 +77,14 @@ rows = re.findall(r"<tr>(.*?)</tr>", api_data, re.DOTALL)
 poke_lookup = []
 for row in rows:
     cols = re.findall(r"<td>(.*?)</td>", row, re.DOTALL)
-    if len(cols) >= 6:
+    if len(cols) >= 7:  # <-- was 6
         name = re.sub(r"<.*?>", "", cols[0]).strip()
         pokedex = re.sub(r"<.*?>", "", cols[1]).strip()
         form = re.sub(r"<.*?>", "", cols[2]).strip()
         costume = re.sub(r"<.*?>", "", cols[3]).strip()
         mega = re.sub(r"<.*?>", "", cols[4]).strip()
-        filecode = re.sub(r"<.*?>", "", cols[5]).strip()
+        # filecode = re.sub(r"<.*?>", "", cols[5]).strip()  # Full UICON (old)
+        filecode = re.sub(r"<.*?>", "", cols[6]).strip()    # Used UICON (new)
         poke_lookup.append({
             "name": name,
             "pokedex": pokedex,
@@ -1171,6 +1172,7 @@ async def form(ctx, *, args):
             return
 
         url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
+        print(f"[FORM URL] {url}")
         response = requests.get(url)
         if response.status_code != 200:
             await ctx.send("Could not find that Pokémon or form.")
@@ -1335,6 +1337,7 @@ def lookup_form_id_for_mon(mon_id, form_query):
                 m = re.search(r"\((\d+)\)", entry["form"])
                 if m:
                     return int(m.group(1)), entry["form"]
+   
     return 0, None  # fallback to default form
 
 def parse_mon_args(parts):
