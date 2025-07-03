@@ -1036,7 +1036,7 @@ async def costume(ctx, *, args):
 
         icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
         if costume_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_{costume_id}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_c{costume_id}.png"
         else:
             url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}.png"
         print(f"[COSTUME URL] {url}")
@@ -1095,7 +1095,7 @@ async def form(ctx, *, args):
 
         icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
         if form_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_{form_id}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_f{form_id}.png"
         else:
             url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}.png"
         print(f"[FORM URL] {url}")
