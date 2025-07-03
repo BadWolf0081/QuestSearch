@@ -16,6 +16,7 @@ def create_config(config_path):
     config['admins'] = config_raw.get('Config','admins')
     config['admins'] = list(map(int, list(config['admins'].split(','))))
     config['mon_icon_repo'] = config_raw.get('Config','pokemon_icon_repo')
+    config['form_icon_repo'] = config_raw.get('Config','form_icon_repo')
     config['emote_repo'] = config_raw.get('Config','emote_repo')
     config['host_channel'] = config_raw.get('Config','trash_channel')
     config['host_server'] = config_raw.get('Config','trash_server')
