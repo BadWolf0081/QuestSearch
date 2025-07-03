@@ -1285,40 +1285,28 @@ def fuzzy_lookup_costume_id(query):
     return None, None
 
 def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False):
-    # Read api.json as text (already loaded as api_data)
     print(f"[API FILECODE] Looking up: pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}")
-    # Find all rows for this pokedex_id
-    pattern = re.compile(rf"<td>[^<]*</td>\s*<td>[^<]*\({pokedex_id}\)[^<]*</td>(.*?)</tr>", re.DOTALL)
-    matches = pattern.findall(api_data)
-    print(f"[API FILECODE] Found {len(matches)} candidate rows for pokedex_id={pokedex_id}")
     candidates = []
-    for row in matches:
-        cols = re.findall(r"<td>(.*?)</td>", row, re.DOTALL)
-        if len(cols) < 6:
-            print(f"[API FILECODE] Skipping row with insufficient columns: {cols}")
+    for entry in poke_lookup:
+        # Check pokedex_id match
+        if f"({pokedex_id})" not in entry["pokedex"]:
             continue
-        form_str = cols[2].strip().lower()      # <-- was cols[1]
-        costume_str = cols[3].strip().lower()   # <-- was cols[2]
-        filecode = cols[5].strip()
-        print(f"[API FILECODE] Row: form_str='{form_str}', costume_str='{costume_str}', filecode='{filecode}'")
-        # Check form/costume match
-        if form_id and f"({form_id})" in form_str:
-            print(f"[API FILECODE] Matched form_id {form_id} in form_str '{form_str}'")
-            candidates.append(filecode)
-        elif costume_id and f"({costume_id})" in costume_str:
-            print(f"[API FILECODE] Matched costume_id {costume_id} in costume_str '{costume_str}'")
-            candidates.append(filecode)
-        elif not form_id and not costume_id:
-            print(f"[API FILECODE] No form/costume specified, adding filecode '{filecode}'")
-            candidates.append(filecode)
+        # Check form_id if provided
+        if form_id and f"({form_id})" not in entry["form"]:
+            continue
+        # Check costume_id if provided
+        if costume_id and f"({costume_id})" not in entry["costume"]:
+            continue
+        filecode = entry["filecode"]
+        if not filecode:
+            continue
+        candidates.append(filecode)
     # Prefer shiny if available
     if shiny:
         shiny_candidates = [c for c in candidates if c.endswith("_s")]
-        print(f"[API FILECODE] Shiny candidates: {shiny_candidates}")
         if shiny_candidates:
             print(f"[API FILECODE] Returning shiny filecode: {shiny_candidates[0]}")
             return shiny_candidates[0]
-    # Otherwise, return first match
     if candidates:
         print(f"[API FILECODE] Returning filecode: {candidates[0]}")
         return candidates[0]
