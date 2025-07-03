@@ -1349,8 +1349,8 @@ def parse_mon_args(parts):
 
     # Remove shiny if present
     if parts and parts[-1].lower() == "shiny":
-               shiny = True
-        parts = parts[:-1]
+            shiny = True
+            parts = parts[:-1]
 
     # Remove mega if present
     if "mega" in [p.lower() for p in parts]:
