@@ -1012,7 +1012,7 @@ async def costume(ctx, *, args):
     """
     try:
         parts = args.strip().split()
-        if len(parts) == 0:
+        if not parts:
             await ctx.send("Usage: !costume <pokemon name> [costume_id]")
             return
         if len(parts) > 1:
@@ -1021,14 +1021,30 @@ async def costume(ctx, *, args):
         else:
             mon_name = parts[0]
             costume_id = None
-        mon = details(mon_name, bot.config['form_icon_repo'], bot.config['language'])
-        icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
+
+        # Use the same lookup as the rest of the bot
+        try:
+            mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+            if not hasattr(mon, "id") or not mon.id:
+                print(f"[COSTUME ERROR] Could not resolve Pokémon name '{mon_name}'")
+                await ctx.send(f"Could not find Pokémon: {mon_name}")
+                return
+        except Exception as e:
+            print(f"[COSTUME ERROR] Exception during details lookup: {e}")
+            await ctx.send(f"Could not find Pokémon: {mon_name}")
+            return
+
+        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if costume_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_{costume_id}.png"
+            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}_{costume_id}.png"
         else:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}.png"
+            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}.png"
         print(f"[COSTUME URL] {url}")
         response = requests.get(url)
+        if response.status_code != 200:
+            print(f"[COSTUME ERROR] HTTP {response.status_code} for URL: {url}")
+            await ctx.send("Could not find that Pokémon or costume.")
+            return
         img = Image.open(BytesIO(response.content)).convert("RGBA")
         scale_factor = 3
         new_icon_size = (img.width * scale_factor, img.height * scale_factor)
@@ -1055,24 +1071,39 @@ async def form(ctx, *, args):
     """
     try:
         parts = args.strip().split()
-        if len(parts) == 0:
+        if not parts:
             await ctx.send("Usage: !form <pokemon name> [form_id]")
             return
-        # If more than one part, last is form_id, rest is name
         if len(parts) > 1:
             mon_name = " ".join(parts[:-1])
             form_id = parts[-1]
         else:
             mon_name = parts[0]
             form_id = None
-        mon = details(mon_name, bot.config['form_icon_repo'], bot.config['language'])
-        icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
+
+        # Use the same lookup as the rest of the bot
+        try:
+            mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+            if not hasattr(mon, "id") or not mon.id:
+                print(f"[FORM ERROR] Could not resolve Pokémon name '{mon_name}'")
+                await ctx.send(f"Could not find Pokémon: {mon_name}")
+                return
+        except Exception as e:
+            print(f"[FORM ERROR] Exception during details lookup: {e}")
+            await ctx.send(f"Could not find Pokémon: {mon_name}")
+            return
+
+        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if form_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_{form_id}.png"
+            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}_{form_id}.png"
         else:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}.png"
+            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}.png"
         print(f"[FORM URL] {url}")
         response = requests.get(url)
+        if response.status_code != 200:
+            print(f"[FORM ERROR] HTTP {response.status_code} for URL: {url}")
+            await ctx.send("Could not find that Pokémon or form.")
+            return
         img = Image.open(BytesIO(response.content)).convert("RGBA")
         scale_factor = 3
         new_icon_size = (img.width * scale_factor, img.height * scale_factor)
