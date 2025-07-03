@@ -1005,26 +1005,36 @@ async def quest(ctx, areaname = "", *, reward):
 @bot.command(pass_context=True)
 async def costume(ctx, *, args):
     """
-    Usage: !costume <pokemon name> [costume_id]
-    Example: !costume pikachu 001
+    Usage: !costume <pokemon name> [costume_id] [shiny]
+    Example: !costume pikachu 001 shiny
     If no costume_id is given, returns the default icon.
     Costume/form can be any string (number, letter, or combo).
+    Add 'shiny' as the last argument to get the shiny version.
     """
     try:
         parts = args.strip().split()
         if not parts:
-            await ctx.send("Usage: !costume <pokemon name> [costume_id]")
+            await ctx.send("Usage: !costume <pokemon name> [costume_id] [shiny]")
             return
-        if len(parts) > 1:
+        shiny = False
+        if len(parts) > 2 and parts[-1].lower() == "shiny":
+            shiny = True
+            costume_id = parts[-2]
+            mon_name = " ".join(parts[:-2])
+        elif len(parts) > 1 and parts[-1].lower() == "shiny":
+            shiny = True
+            costume_id = None
             mon_name = " ".join(parts[:-1])
+        elif len(parts) > 1:
             costume_id = parts[-1]
+            mon_name = " ".join(parts[:-1])
         else:
             mon_name = parts[0]
             costume_id = None
 
         # Use the same lookup as the rest of the bot
         try:
-            mon = details(mon_name, bot.config['form_icon_repo'], bot.config['language'])
+            mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
             if not hasattr(mon, "id") or not mon.id:
                 print(f"[COSTUME ERROR] Could not resolve Pokémon name '{mon_name}'")
                 await ctx.send(f"Could not find Pokémon: {mon_name}")
@@ -1034,11 +1044,14 @@ async def costume(ctx, *, args):
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
+        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if costume_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_c{costume_id}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_{costume_id}"
         else:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}"
+        if shiny:
+            url += "_s"
+        url += ".png"
         print(f"[COSTUME URL] {url}")
         response = requests.get(url)
         if response.status_code != 200:
@@ -1064,26 +1077,36 @@ async def costume(ctx, *, args):
 @bot.command(pass_context=True)
 async def form(ctx, *, args):
     """
-    Usage: !form <pokemon name> [form_id]
-    Example: !form deoxys 0034
+    Usage: !form <pokemon name> [form_id] [shiny]
+    Example: !form deoxys 0034 shiny
     If no form_id is given, returns the default icon.
     Costume/form can be any string (number, letter, or combo).
+    Add 'shiny' as the last argument to get the shiny version.
     """
     try:
         parts = args.strip().split()
         if not parts:
-            await ctx.send("Usage: !form <pokemon name> [form_id]")
+            await ctx.send("Usage: !form <pokemon name> [form_id] [shiny]")
             return
-        if len(parts) > 1:
+        shiny = False
+        if len(parts) > 2 and parts[-1].lower() == "shiny":
+            shiny = True
+            form_id = parts[-2]
+            mon_name = " ".join(parts[:-2])
+        elif len(parts) > 1 and parts[-1].lower() == "shiny":
+            shiny = True
+            form_id = None
             mon_name = " ".join(parts[:-1])
+        elif len(parts) > 1:
             form_id = parts[-1]
+            mon_name = " ".join(parts[:-1])
         else:
             mon_name = parts[0]
             form_id = None
 
         # Use the same lookup as the rest of the bot
         try:
-            mon = details(mon_name, bot.config['form_icon_repo'], bot.config['language'])
+            mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
             if not hasattr(mon, "id") or not mon.id:
                 print(f"[FORM ERROR] Could not resolve Pokémon name '{mon_name}'")
                 await ctx.send(f"Could not find Pokémon: {mon_name}")
@@ -1093,11 +1116,14 @@ async def form(ctx, *, args):
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
+        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if form_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_f{form_id}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_f{form_id}"
         else:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}"
+        if shiny:
+            url += "_s"
+        url += ".png"
         print(f"[FORM URL] {url}")
         response = requests.get(url)
         if response.status_code != 200:
@@ -1119,6 +1145,77 @@ async def form(ctx, *, args):
     except Exception as e:
         print(f"[FORM ERROR] {e}")
         await ctx.send("Could not find that Pokémon or form.")
+
+@bot.command(pass_context=True)
+async def custom(ctx, *, args):
+    """
+    Usage: !custom <pokemon name> [custom_id] [shiny]
+    Example: !custom pikachu 001 shiny
+    If no custom_id is given, returns the default icon.
+    Add 'shiny' as the last argument to get the shiny version.
+    This uses the format: pokemon/{dex}_{custom_id}.png (no _f or _c)
+    """
+    try:
+        parts = args.strip().split()
+        if not parts:
+            await ctx.send("Usage: !custom <pokemon name> [custom_id] [shiny]")
+            return
+        shiny = False
+        if len(parts) > 2 and parts[-1].lower() == "shiny":
+            shiny = True
+            custom_id = parts[-2]
+            mon_name = " ".join(parts[:-2])
+        elif len(parts) > 1 and parts[-1].lower() == "shiny":
+            shiny = True
+            custom_id = None
+            mon_name = " ".join(parts[:-1])
+        elif len(parts) > 1:
+            custom_id = parts[-1]
+            mon_name = " ".join(parts[:-1])
+        else:
+            mon_name = parts[0]
+            custom_id = None
+
+        try:
+            mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+            if not hasattr(mon, "id") or not mon.id:
+                print(f"[CUSTOM ERROR] Could not resolve Pokémon name '{mon_name}'")
+                await ctx.send(f"Could not find Pokémon: {mon_name}")
+                return
+        except Exception as e:
+            print(f"[CUSTOM ERROR] Exception during details lookup: {e}")
+            await ctx.send(f"Could not find Pokémon: {mon_name}")
+            return
+
+        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
+        if custom_id:
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_{custom_id}"
+        else:
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}"
+        if shiny:
+            url += "_s"
+        url += ".png"
+        print(f"[CUSTOM URL] {url}")
+        response = requests.get(url)
+        if response.status_code != 200:
+            print(f"[CUSTOM ERROR] HTTP {response.status_code} for URL: {url}")
+            await ctx.send("Could not find that Pokémon or custom icon.")
+            return
+        img = Image.open(BytesIO(response.content)).convert("RGBA")
+        scale_factor = 3
+        new_icon_size = (img.width * scale_factor, img.height * scale_factor)
+        img = img.resize(new_icon_size, Image.LANCZOS)
+        new_size = (max(512, img.width), max(512, img.height))
+        new_img = Image.new("RGBA", new_size, (255, 255, 255, 0))
+        offset = ((new_size[0] - img.width) // 2, (new_size[1] - img.height) // 2)
+        new_img.paste(img, offset, img)
+        buffer = BytesIO()
+        new_img.save(buffer, format="PNG")
+        buffer.seek(0)
+        await ctx.send(file=discord.File(buffer, filename="icon.png"))
+    except Exception as e:
+        print(f"[CUSTOM ERROR] {e}")
+        await ctx.send("Could not find that Pokémon or
 
 @bot.event
 async def on_ready():
