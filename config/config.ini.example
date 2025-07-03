@@ -9,6 +9,7 @@ trash_server = ######
 
 pokemon_icon_repo = https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border/
 emote_repo = https://raw.githubusercontent.com/alexmartz710/dp_emotes/master/
+form_icon_repo = https://your-highres-icons-url/
 
 [Maps]
 use_static_maps = True

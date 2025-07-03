@@ -1022,31 +1022,25 @@ async def costume(ctx, *, args):
             mon_name = parts[0]
             costume_id = None
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if costume_id:
-            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}_{costume_id}.png"
+            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}_{costume_id}.png"
         else:
-            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}.png"
+            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}.png"
         print(f"[COSTUME URL] {url}")
-        try:
-            response = requests.get(url)
-            img = Image.open(BytesIO(response.content)).convert("RGBA")
-            # Scale up the icon (e.g., 3x its original size)
-            scale_factor = 3
-            new_icon_size = (img.width * scale_factor, img.height * scale_factor)
-            img = img.resize(new_icon_size, Image.LANCZOS)
-            # Create a new image with a larger canvas
-            new_size = (max(512, img.width), max(512, img.height))
-            new_img = Image.new("RGBA", new_size, (255, 255, 255, 0))
-            # Center the icon
-            offset = ((new_size[0] - img.width) // 2, (new_size[1] - img.height) // 2)
-            new_img.paste(img, offset, img)
-            buffer = BytesIO()
-            new_img.save(buffer, format="PNG")
-            buffer.seek(0)
-            await ctx.send(file=discord.File(buffer, filename="icon.png"))
-        except Exception as e:
-            print(f"[COSTUME ERROR] {e}")
-            await ctx.send("Could not fetch or process the image.")
+        response = requests.get(url)
+        img = Image.open(BytesIO(response.content)).convert("RGBA")
+        scale_factor = 3
+        new_icon_size = (img.width * scale_factor, img.height * scale_factor)
+        img = img.resize(new_icon_size, Image.LANCZOS)
+        new_size = (max(512, img.width), max(512, img.height))
+        new_img = Image.new("RGBA", new_size, (255, 255, 255, 0))
+        offset = ((new_size[0] - img.width) // 2, (new_size[1] - img.height) // 2)
+        new_img.paste(img, offset, img)
+        buffer = BytesIO()
+        new_img.save(buffer, format="PNG")
+        buffer.seek(0)
+        await ctx.send(file=discord.File(buffer, filename="icon.png"))
     except Exception as e:
         print(f"[COSTUME ERROR] {e}")
         await ctx.send("Could not find that Pokémon or costume.")
@@ -1072,31 +1066,25 @@ async def form(ctx, *, args):
             mon_name = parts[0]
             form_id = None
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if form_id:
-            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}_{form_id}.png"
+            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}_{form_id}.png"
         else:
-            url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}.png"
+            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}.png"
         print(f"[FORM URL] {url}")
-        try:
-            response = requests.get(url)
-            img = Image.open(BytesIO(response.content)).convert("RGBA")
-            # Scale up the icon (e.g., 3x its original size)
-            scale_factor = 3
-            new_icon_size = (img.width * scale_factor, img.height * scale_factor)
-            img = img.resize(new_icon_size, Image.LANCZOS)
-            # Create a new image with a larger canvas
-            new_size = (max(512, img.width), max(512, img.height))
-            new_img = Image.new("RGBA", new_size, (255, 255, 255, 0))
-            # Center the icon
-            offset = ((new_size[0] - img.width) // 2, (new_size[1] - img.height) // 2)
-            new_img.paste(img, offset, img)
-            buffer = BytesIO()
-            new_img.save(buffer, format="PNG")
-            buffer.seek(0)
-            await ctx.send(file=discord.File(buffer, filename="icon.png"))
-        except Exception as e:
-            print(f"[FORM ERROR] {e}")
-            await ctx.send("Could not fetch or process the image.")
+        response = requests.get(url)
+        img = Image.open(BytesIO(response.content)).convert("RGBA")
+        scale_factor = 3
+        new_icon_size = (img.width * scale_factor, img.height * scale_factor)
+        img = img.resize(new_icon_size, Image.LANCZOS)
+        new_size = (max(512, img.width), max(512, img.height))
+        new_img = Image.new("RGBA", new_size, (255, 255, 255, 0))
+        offset = ((new_size[0] - img.width) // 2, (new_size[1] - img.height) // 2)
+        new_img.paste(img, offset, img)
+        buffer = BytesIO()
+        new_img.save(buffer, format="PNG")
+        buffer.seek(0)
+        await ctx.send(file=discord.File(buffer, filename="icon.png"))
     except Exception as e:
         print(f"[FORM ERROR] {e}")
         await ctx.send("Could not find that Pokémon or form.")
