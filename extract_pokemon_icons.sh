@@ -1,10 +1,14 @@
 #!/bin/bash
 
 INPUT="data/api.json"
+OUTPUT="pokemon_icons_found.json"
 
 awk '
+    BEGIN {
+        print "[" > "'"$OUTPUT"'"
+        first = 1
+    }
     /<td><img src="pokemon\// {
-        # Look back for the previous 7 <td> fields (since the table has many columns)
         td_count = 0
         for (i=NR-1; i>0 && td_count<7; i--) {
             if (match(lines[i], /<td>([^<]*)<\/td>/, arr)) {
@@ -21,9 +25,17 @@ awk '
         }
         if (!(img in seen)) {
             seen[img] = 1
+            if (!first) {
+                print "," >> "'"$OUTPUT"'"
+            }
+            first = 0
+            printf "  {\"name\": \"%s\", \"form\": \"%s\", \"costume\": \"%s\", \"img\": \"%s\"}", name, form, costume, img >> "'"$OUTPUT"'"
             print "NEW ENTRY: name=" name ", form=" form ", costume=" costume ", img=" img
         }
         delete fields
     }
     { lines[NR] = $0 }
+    END {
+        print "\n]" >> "'"$OUTPUT"'"
+    }
 ' "$INPUT"
