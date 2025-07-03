@@ -1255,7 +1255,7 @@ async def on_ready():
         trash_channel = await bot.fetch_channel(bot.config['host_channel'])
         bot.static_map = util.maps.static_map(config['static_provider'], config['static_key'], trash_channel, bot.config['mon_icon_repo'])
 
-with open "data/forms/formsen.json", encoding="utf-8") as f:
+with open ("data/forms/formsen.json", encoding="utf-8") as f:
     forms_data = json.load(f)
 
 def fuzzy_lookup_form_id(query):
