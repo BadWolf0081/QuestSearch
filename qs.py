@@ -1024,9 +1024,9 @@ async def costume(ctx, *, args):
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
         icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if costume_id:
-            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}_{costume_id}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_{costume_id}.png"
         else:
-            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}.png"
         print(f"[COSTUME URL] {url}")
         response = requests.get(url)
         img = Image.open(BytesIO(response.content)).convert("RGBA")
@@ -1068,9 +1068,9 @@ async def form(ctx, *, args):
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
         icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if form_id:
-            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}_{form_id}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_{form_id}.png"
         else:
-            url = f"{icon_repo}pokemon_icon_{str(mon.id).zfill(3)}.png"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}.png"
         print(f"[FORM URL] {url}")
         response = requests.get(url)
         img = Image.open(BytesIO(response.content)).convert("RGBA")
