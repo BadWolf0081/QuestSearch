@@ -2,6 +2,9 @@ import discord
 import json
 import asyncio
 import aiomysql
+import requests
+from PIL import Image
+from io import BytesIO
 
 from datetime import datetime, date
 import matplotlib.pyplot as plt
@@ -1025,7 +1028,23 @@ async def costume(ctx, *, args):
         else:
             url = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id).zfill(3)}.png"
         print(f"[COSTUME URL] {url}")
-        await ctx.send(url)
+        try:
+            response = requests.get(url)
+            img = Image.open(BytesIO(response.content))
+            # Create a new image with a larger canvas
+            new_size = (512, 512)
+            new_img = Image.new("RGBA", new_size, (255, 255, 255, 0))
+            img = img.convert("RGBA")
+            # Center the icon
+            offset = ((new_size[0] - img.width) // 2, (new_size[1] - img.height) // 2)
+            new_img.paste(img, offset, img)
+            buffer = BytesIO()
+            new_img.save(buffer, format="PNG")
+            buffer.seek(0)
+            await ctx.send(file=discord.File(buffer, filename="icon.png"))
+        except Exception as e:
+            print(f"[COSTUME ERROR] {e}")
+            await ctx.send("Could not fetch or process the image.")
     except Exception as e:
         print(f"[COSTUME ERROR] {e}")
         await ctx.send("Could not find that Pokémon or costume.")
