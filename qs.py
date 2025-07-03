@@ -1024,7 +1024,7 @@ async def costume(ctx, *, args):
 
         # Use the same lookup as the rest of the bot
         try:
-            mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+            mon = details(mon_name, bot.config['form_icon_repo'], bot.config['language'])
             if not hasattr(mon, "id") or not mon.id:
                 print(f"[COSTUME ERROR] Could not resolve Pokémon name '{mon_name}'")
                 await ctx.send(f"Could not find Pokémon: {mon_name}")
@@ -1034,7 +1034,7 @@ async def costume(ctx, *, args):
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
+        icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
         if costume_id:
             url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_{costume_id}.png"
         else:
@@ -1083,7 +1083,7 @@ async def form(ctx, *, args):
 
         # Use the same lookup as the rest of the bot
         try:
-            mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+            mon = details(mon_name, bot.config['form_icon_repo'], bot.config['language'])
             if not hasattr(mon, "id") or not mon.id:
                 print(f"[FORM ERROR] Could not resolve Pokémon name '{mon_name}'")
                 await ctx.send(f"Could not find Pokémon: {mon_name}")
@@ -1093,7 +1093,7 @@ async def form(ctx, *, args):
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
+        icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
         if form_id:
             url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_{form_id}.png"
         else:
