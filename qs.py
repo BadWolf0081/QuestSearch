@@ -5,6 +5,8 @@ import aiomysql
 import requests
 from PIL import Image
 from io import BytesIO
+import difflib
+import re
 
 from datetime import datetime, date
 import matplotlib.pyplot as plt
@@ -65,6 +67,56 @@ with open("config/geofence.json", encoding="utf-8") as f:
     
 with open("config/emotes.json", encoding="utf-8") as f:
     bot.custom_emotes = json.load(f)
+
+# Load and parse api.json at startup
+with open("data/api.json", encoding="utf-8") as f:
+    api_data = f.read()
+
+# Extract all rows from the HTML table in api.json
+rows = re.findall(r"<tr>(.*?)</tr>", api_data, re.DOTALL)
+poke_lookup = []
+for row in rows:
+    cols = re.findall(r"<td>(.*?)</td>", row, re.DOTALL)
+    if len(cols) >= 6:
+        name = re.sub(r"<.*?>", "", cols[0]).strip()
+        pokedex = re.sub(r"<.*?>", "", cols[1]).strip()
+        form = re.sub(r"<.*?>", "", cols[2]).strip()
+        costume = re.sub(r"<.*?>", "", cols[3]).strip()
+        filecode = re.sub(r"<.*?>", "", cols[5]).strip()
+        poke_lookup.append({
+            "name": name,
+            "pokedex": pokedex,
+            "form": form,
+            "costume": costume,
+            "filecode": filecode
+        })
+
+def fuzzy_find_pokemon(query):
+    names = [p["name"] for p in poke_lookup]
+    match = difflib.get_close_matches(query, names, n=1, cutoff=0.6)
+    if match:
+        for p in poke_lookup:
+            if p["name"] == match[0]:
+                return p
+    return None
+
+def fuzzy_find_variant(pokemon, query, variant_type):
+    # variant_type: "form" or "costume" or "filecode"
+    variants = []
+    for p in poke_lookup:
+        if p["name"] == pokemon["name"]:
+            if variant_type == "form" and p["form"]:
+                variants.append(p["form"])
+            elif variant_type == "costume" and p["costume"]:
+                variants.append(p["costume"])
+            elif variant_type == "filecode" and p["filecode"]:
+                variants.append(p["filecode"])
+    match = difflib.get_close_matches(query, variants, n=1, cutoff=0.6)
+    if match:
+        for p in poke_lookup:
+            if p["name"] == pokemon["name"] and (p[variant_type] == match[0]):
+                return p
+    return None
 
 async def get_data(area, mon_id):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])
@@ -1005,57 +1057,50 @@ async def quest(ctx, areaname = "", *, reward):
 @bot.command(pass_context=True)
 async def costume(ctx, *, args):
     """
-    Usage: !costume <pokemon name> [costume_id] [shiny]
-    Example: !costume pikachu 001 shiny
-    If no costume_id is given, returns the default icon.
-    Costume/form can be any string (number, letter, or combo).
-    Add 'shiny' as the last argument to get the shiny version.
+    Usage: !costume <pokemon name> [costume] [shiny]
     """
     try:
         parts = args.strip().split()
         if not parts:
-            await ctx.send("Usage: !costume <pokemon name> [costume_id] [shiny]")
+            await ctx.send("Usage: !costume <pokemon name> [costume] [shiny]")
             return
         shiny = False
         if len(parts) > 2 and parts[-1].lower() == "shiny":
             shiny = True
-            costume_id = parts[-2]
+            costume_query = parts[-2]
             mon_name = " ".join(parts[:-2])
         elif len(parts) > 1 and parts[-1].lower() == "shiny":
             shiny = True
-            costume_id = None
+            costume_query = None
             mon_name = " ".join(parts[:-1])
         elif len(parts) > 1:
-            costume_id = parts[-1]
+            costume_query = parts[-1]
             mon_name = " ".join(parts[:-1])
         else:
             mon_name = parts[0]
-            costume_id = None
+            costume_query = None
 
-        # Use the same lookup as the rest of the bot
-        try:
-            mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
-            if not hasattr(mon, "id") or not mon.id:
-                print(f"[COSTUME ERROR] Could not resolve Pokémon name '{mon_name}'")
-                await ctx.send(f"Could not find Pokémon: {mon_name}")
-                return
-        except Exception as e:
-            print(f"[COSTUME ERROR] Exception during details lookup: {e}")
+        pokemon = fuzzy_find_pokemon(mon_name)
+        if not pokemon:
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
-        if costume_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_{costume_id}"
+        if costume_query:
+            variant = fuzzy_find_variant(pokemon, costume_query, "costume")
+            if not variant:
+                await ctx.send(f"Could not find costume '{costume_query}' for {pokemon['name']}")
+                return
         else:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}"
+            variant = pokemon
+
+        filecode = variant["filecode"]
         if shiny:
-            url += "_s"
-        url += ".png"
+            filecode += "_s"
+        icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
+        url = f"{icon_repo}pokemon/{filecode}.png"
         print(f"[COSTUME URL] {url}")
         response = requests.get(url)
         if response.status_code != 200:
-            print(f"[COSTUME ERROR] HTTP {response.status_code} for URL: {url}")
             await ctx.send("Could not find that Pokémon or costume.")
             return
         img = Image.open(BytesIO(response.content)).convert("RGBA")
