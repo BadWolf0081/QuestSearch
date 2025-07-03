@@ -1146,7 +1146,7 @@ async def form(ctx, *, args):
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        form_id, form_name = fuzzy_lookup_form_id(form_query) if form_query else (0, None)
+        form_id, form_name = lookup_form_id_for_mon(mon.id, form_query) if form_query else (0, None)
         if form_id is None:
             await ctx.send(f"Could not find form: {form_query}")
             return
@@ -1312,6 +1312,20 @@ def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False):
         return candidates[0]
     print(f"[API FILECODE] No candidates found for pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}")
     return None
+
+def lookup_form_id_for_mon(mon_id, form_query):
+    """Find the correct form_id for a given Pokémon ID and form name (case-insensitive, fuzzy)."""
+    candidates = [entry for entry in poke_lookup if f"({mon_id})" in entry["pokedex"]]
+    form_names = [entry["form"] for entry in candidates if entry["form"]]
+    match = difflib.get_close_matches(form_query.lower(), [f.lower() for f in form_names], n=1, cutoff=0.6)
+    if match:
+        for entry in candidates:
+            if entry["form"].lower() == match[0]:
+                # Extract the form_id from the string, e.g. "MEOWTH_GALARIAN (2335)"
+                m = re.search(r"\((\d+)\)", entry["form"])
+                if m:
+                    return int(m.group(1)), entry["form"]
+    return 0, None  # fallback to default form
 
 if __name__ == "__main__":
     for extension in extensions:
