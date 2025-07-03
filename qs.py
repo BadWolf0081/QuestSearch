@@ -1080,24 +1080,12 @@ async def costume(ctx, *, args):
             mon_name = parts[0]
             costume_query = None
 
-        pokemon = fuzzy_find_pokemon(mon_name)
-        if not pokemon:
-            await ctx.send(f"Could not find Pokémon: {mon_name}")
+        # Use the new fuzzy_icon_lookup
+        icon_entry = fuzzy_icon_lookup(mon_name, costume=costume_query, shiny=shiny)
+        if not icon_entry:
+            await ctx.send("Could not find that Pokémon or costume.")
             return
-
-        if costume_query:
-            variant = fuzzy_find_variant(pokemon, costume_query, "costume")
-            if not variant:
-                await ctx.send(f"Could not find costume '{costume_query}' for {pokemon['name']}")
-                return
-        else:
-            variant = pokemon
-
-        filecode = variant["filecode"]
-        if shiny:
-            filecode += "_s"
-        icon_repo = bot.config.get('form_icon_repo', bot.config['form_icon_repo'])
-        url = f"{icon_repo}pokemon/{filecode}.png"
+        url = bot.config.get('form_icon_repo', bot.config['form_icon_repo']) + icon_entry["img"]
         print(f"[COSTUME URL] {url}")
         response = requests.get(url)
         if response.status_code != 200:
@@ -1269,6 +1257,44 @@ async def on_ready():
     if bot.config['use_static']:
         trash_channel = await bot.fetch_channel(bot.config['host_channel'])
         bot.static_map = util.maps.static_map(config['static_provider'], config['static_key'], trash_channel, bot.config['mon_icon_repo'])
+
+with open("pokemon_icons_found.json", encoding="utf-8") as f:
+    pokemon_icons = json.load(f)
+
+def fuzzy_icon_lookup(name, form=None, costume=None, shiny=False):
+    # Normalize input
+    name = name.lower().strip()
+    if shiny and not name.startswith("shiny"):
+        name = "shiny " + name
+    elif not shiny and name.startswith("shiny "):
+        name = name[6:]
+    # Fuzzy match name
+    names = [p["name"].strip().lower() for p in pokemon_icons]
+    name_match = difflib.get_close_matches(name, names, n=5, cutoff=0.6)
+    if not name_match:
+        return None
+    # Filter by name
+    candidates = [p for p in pokemon_icons if p["name"].strip().lower() == name_match[0]]
+    # Fuzzy match form/costume if provided
+    if form:
+        form = form.lower()
+        forms = [c["form"].lower() for c in candidates]
+        form_match = difflib.get_close_matches(form, forms, n=1, cutoff=0.6)
+        if form_match:
+            candidates = [c for c in candidates if c["form"].lower() == form_match[0]]
+    if costume:
+        costume = costume.lower()
+        costumes = [c["costume"].lower() for c in candidates]
+        costume_match = difflib.get_close_matches(costume, costumes, n=1, cutoff=0.6)
+        if costume_match:
+            candidates = [c for c in candidates if c["costume"].lower() == costume_match[0]]
+    # Prefer shiny if possible
+    if shiny:
+        candidates = [c for c in candidates if c["name"].lower().startswith("shiny")]
+    else:
+        candidates = [c for c in candidates if not c["name"].lower().startswith("shiny")]
+    # Return the first match
+    return candidates[0] if candidates else None
 
 if __name__ == "__main__":
     for extension in extensions:
