@@ -1046,9 +1046,9 @@ async def costume(ctx, *, args):
 
         icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if costume_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_{costume_id}"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_{costume_id}"
         else:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}"
         if shiny:
             url += "_s"
         url += ".png"
@@ -1118,9 +1118,9 @@ async def form(ctx, *, args):
 
         icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if form_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_f{form_id}"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_f{form_id}"
         else:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}"
         if shiny:
             url += "_s"
         url += ".png"
@@ -1189,9 +1189,9 @@ async def custom(ctx, *, args):
 
         icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
         if custom_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}_{custom_id}"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_{custom_id}"
         else:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(3)}"
+            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}"
         if shiny:
             url += "_s"
         url += ".png"
