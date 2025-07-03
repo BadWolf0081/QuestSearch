@@ -1151,10 +1151,8 @@ async def form(ctx, *, args):
             await ctx.send(f"Could not find form: {form_query}")
             return
 
-        filecode = get_api_filecode(mon.id, form_id=form_id, shiny=shiny)
-        if not filecode:
-            await ctx.send("Could not find that Pokémon or form (API crossref failed).")
-            return
+        print(f"[COMMAND] Calling get_api_filecode with mon.id={mon.id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}")
+        filecode = get_api_filecode(mon.id, form_id=form_id, costume_id=costume_id, shiny=shiny)
 
         url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
         print(f"[FORM URL] {url}")
@@ -1284,31 +1282,44 @@ def fuzzy_lookup_costume_id(query):
 
 def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False):
     # Read api.json as text (already loaded as api_data)
+    print(f"[API FILECODE] Looking up: pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}")
     # Find all rows for this pokedex_id
     pattern = re.compile(rf"<td>[^<]*</td>\s*<td>[^<]*\({pokedex_id}\)[^<]*</td>(.*?)</tr>", re.DOTALL)
     matches = pattern.findall(api_data)
+    print(f"[API FILECODE] Found {len(matches)} candidate rows for pokedex_id={pokedex_id}")
     candidates = []
     for row in matches:
         cols = re.findall(r"<td>(.*?)</td>", row, re.DOTALL)
         if len(cols) < 6:
+            print(f"[API FILECODE] Skipping row with insufficient columns: {cols}")
             continue
         form_str = cols[1].strip().lower()
         costume_str = cols[2].strip().lower()
         filecode = cols[5].strip()
+        print(f"[API FILECODE] Row: form_str='{form_str}', costume_str='{costume_str}', filecode='{filecode}'")
         # Check form/costume match
         if form_id and f"({form_id})" in form_str:
+            print(f"[API FILECODE] Matched form_id {form_id} in form_str '{form_str}'")
             candidates.append(filecode)
         elif costume_id and f"({costume_id})" in costume_str:
+            print(f"[API FILECODE] Matched costume_id {costume_id} in costume_str '{costume_str}'")
             candidates.append(filecode)
         elif not form_id and not costume_id:
+            print(f"[API FILECODE] No form/costume specified, adding filecode '{filecode}'")
             candidates.append(filecode)
     # Prefer shiny if available
     if shiny:
         shiny_candidates = [c for c in candidates if c.endswith("_s")]
+        print(f"[API FILECODE] Shiny candidates: {shiny_candidates}")
         if shiny_candidates:
+            print(f"[API FILECODE] Returning shiny filecode: {shiny_candidates[0]}")
             return shiny_candidates[0]
     # Otherwise, return first match
-    return candidates[0] if candidates else None
+    if candidates:
+        print(f"[API FILECODE] Returning filecode: {candidates[0]}")
+        return candidates[0]
+    print(f"[API FILECODE] No candidates found for pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}")
+    return None
 
 if __name__ == "__main__":
     for extension in extensions:
