@@ -1215,7 +1215,7 @@ async def custom(ctx, *, args):
         await ctx.send(file=discord.File(buffer, filename="icon.png"))
     except Exception as e:
         print(f"[CUSTOM ERROR] {e}")
-        await ctx.send("Could not find that Pokémon or
+        await ctx.send("Could not find that Pokémon or custom icon.")
 
 @bot.event
 async def on_ready():
