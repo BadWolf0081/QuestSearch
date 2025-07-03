@@ -1065,17 +1065,17 @@ async def costume(ctx, *, args):
             await ctx.send("Usage: !costume <pokemon name> [costume] [shiny]")
             return
         shiny = False
-        if len(parts) > 2 and parts[-1].lower() == "shiny":
+        costume_query = None
+        mon_name = None
+
+        # Check for shiny at the end
+        if parts and parts[-1].lower() == "shiny":
             shiny = True
-            costume_query = parts[-2]
-            mon_name = " ".join(parts[:-2])
-        elif len(parts) > 1 and parts[-1].lower() == "shiny":
-            shiny = True
-            costume_query = None
-            mon_name = " ".join(parts[:-1])
-        elif len(parts) > 1:
-            costume_query = parts[-1]
-            mon_name = " ".join(parts[:-1])
+            parts = parts[:-1]
+
+        if len(parts) > 1:
+            mon_name = parts[0]
+            costume_query = " ".join(parts[1:])
         else:
             mon_name = parts[0]
             costume_query = None
@@ -1085,14 +1085,26 @@ async def costume(ctx, *, args):
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        costume_id, costume_name = fuzzy_lookup_costume_id(costume_query) if costume_query else (0, None)
-        if costume_id is None:
-            await ctx.send(f"Could not find costume: {costume_query}")
+        costume_id = 0
+        costume_name = None
+
+        # Try full costume string (e.g. pikachu_libre)
+        if costume_query:
+            full_costume = f"{mon_name}_{costume_query.replace(' ', '_')}"
+            costume_id, costume_name = lookup_costume_id_for_mon(mon.id, full_costume)
+            if costume_id == 0 or costume_id is None:
+                # Try just the costume part (e.g. libre)
+                costume_id, costume_name = lookup_costume_id_for_mon(mon.id, costume_query)
+            if costume_id == 0 or costume_id is None:
+                costume_id, costume_name = 0, None
+        else:
+            costume_id, costume_name = 0, None
+
+        filecode = get_api_filecode(mon.id, costume_id=costume_id, shiny=shiny)
+        if not filecode:
+            await ctx.send("Could not find that Pokémon or costume (API crossref failed).")
             return
 
-        filecode = f"{mon.id}_c{costume_id}"
-        if shiny:
-            filecode += "_s"
         url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
         print(f"[COSTUME URL] {url}")
         response = requests.get(url)
@@ -1114,6 +1126,20 @@ async def costume(ctx, *, args):
     except Exception as e:
         print(f"[COSTUME ERROR] {e}")
         await ctx.send("Could not find that Pokémon or costume.")
+
+def lookup_costume_id_for_mon(mon_id, costume_query):
+    """Find the correct costume_id for a given Pokémon ID and costume name (case-insensitive, fuzzy)."""
+    candidates = [entry for entry in poke_lookup if f"({mon_id})" in entry["pokedex"]]
+    costume_names = [entry["costume"] for entry in candidates if entry["costume"]]
+    match = difflib.get_close_matches(costume_query.lower(), [c.lower() for c in costume_names], n=1, cutoff=0.6)
+    if match:
+        for entry in candidates:
+            if entry["costume"].lower() == match[0]:
+                # Extract the costume_id from the string, e.g. "LIBRE (78)"
+                m = re.search(r"\((\d+)\)", entry["costume"])
+                if m:
+                    return int(m.group(1)), entry["costume"]
+    return 0, None  # fallback to default costume
 
 @bot.command(pass_context=True)
 async def form(ctx, *, args):
