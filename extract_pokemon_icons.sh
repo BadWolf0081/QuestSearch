@@ -1,24 +1,29 @@
 #!/bin/bash
 
 INPUT="data/api.json"
-OUTPUT="pokemon_icons.json"
 
 awk '
-    # For each table row, extract the relevant fields and the img src
-    match($0, /<tr>.*<td>([^<]*)<\/td>.*<td>([^<]*)<\/td>.*<td>([^<]*)<\/td>.*<td>([^<]*)<\/td>.*<td>([^<]*)<\/td>.*<td>([^<]*)<\/td>.*<td>([^<]*)<\/td>.*<td>([^<]*)<\/td>.*<img src="(pokemon\/[^"]+)"/, arr) {
-        name=arr[1]
-        form=arr[3]
-        costume=arr[4]
-        img=arr[9]
-        # Remove leading/trailing whitespace
-        gsub(/^ +| +$/, "", name)
-        gsub(/^ +| +$/, "", form)
-        gsub(/^ +| +$/, "", costume)
-        # Use img as key to ensure uniqueness
-        if (!seen[img]++) {
-            print "{\"name\": \"" name "\", \"form\": \"" form "\", \"costume\": \"" costume "\", \"img\": \"" img "\"}"
+    /<td><img src="pokemon\// {
+        # Look back for the previous 7 <td> fields (since the table has many columns)
+        td_count = 0
+        for (i=NR-1; i>0 && td_count<7; i--) {
+            if (match(lines[i], /<td>([^<]*)<\/td>/, arr)) {
+                fields[7-td_count] = arr[1]
+                td_count++
+            }
         }
+        name = fields[1]
+        form = fields[3]
+        costume = fields[4]
+        img = ""
+        if (match($0, /<img src="(pokemon\/[^"]+)"/, arr2)) {
+            img = arr2[1]
+        }
+        if (!(img in seen)) {
+            seen[img] = 1
+            print "NEW ENTRY: name=" name ", form=" form ", costume=" costume ", img=" img
+        }
+        delete fields
     }
-' "$INPUT" | jq -s '.' > "$OUTPUT"
-
-echo "Output written to $OUTPUT"
+    { lines[NR] = $0 }
+' "$INPUT"
