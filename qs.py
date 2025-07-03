@@ -1119,6 +1119,7 @@ async def costume(ctx, *, args):
 async def form(ctx, *, args):
     """
     Usage: !form <pokemon name> [form] [shiny]
+    Supports: !form meowth_galarian [shiny]
     """
     try:
         parts = args.strip().split()
@@ -1126,20 +1127,24 @@ async def form(ctx, *, args):
             await ctx.send("Usage: !form <pokemon name> [form] [shiny]")
             return
         shiny = False
-        if len(parts) > 2 and parts[-1].lower() == "shiny":
+        form_query = None
+        mon_name = None
+
+        # Check for shiny at the end
+        if parts and parts[-1].lower() == "shiny":
             shiny = True
-            form_query = parts[-2]
-            mon_name = " ".join(parts[:-2])
-        elif len(parts) > 1 and parts[-1].lower() == "shiny":
-            shiny = True
-            form_query = None
-            mon_name = " ".join(parts[:-1])
+            parts = parts[:-1]
+
+        # Handle meowth_galarian or similar
+        if len(parts) == 1 and "_" in parts[0]:
+            split = parts[0].split("_", 1)
+            mon_name = split[0]
+            form_query = split[1]
         elif len(parts) > 1:
-            form_query = parts[-1]
             mon_name = " ".join(parts[:-1])
+            form_query = parts[-1]
         else:
             mon_name = parts[0]
-            form_query = None
 
         mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
         if not hasattr(mon, "id") or not mon.id:
