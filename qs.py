@@ -1297,8 +1297,8 @@ def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False):
         if len(cols) < 6:
             print(f"[API FILECODE] Skipping row with insufficient columns: {cols}")
             continue
-        form_str = cols[1].strip().lower()
-        costume_str = cols[2].strip().lower()
+        form_str = cols[2].strip().lower()      # <-- was cols[1]
+        costume_str = cols[3].strip().lower()   # <-- was cols[2]
         filecode = cols[5].strip()
         print(f"[API FILECODE] Row: form_str='{form_str}', costume_str='{costume_str}', filecode='{filecode}'")
         # Check form/costume match
