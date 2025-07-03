@@ -1080,12 +1080,20 @@ async def costume(ctx, *, args):
             mon_name = parts[0]
             costume_query = None
 
-        # Use the new fuzzy_icon_lookup
-        icon_entry = fuzzy_icon_lookup(mon_name, costume=costume_query, shiny=shiny)
-        if not icon_entry:
-            await ctx.send("Could not find that Pokémon or costume.")
+        mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+        if not hasattr(mon, "id") or not mon.id:
+            await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
-        url = bot.config.get('form_icon_repo', bot.config['form_icon_repo']) + icon_entry["img"]
+
+        costume_id, costume_name = fuzzy_lookup_costume_id(costume_query) if costume_query else (0, None)
+        if costume_id is None:
+            await ctx.send(f"Could not find costume: {costume_query}")
+            return
+
+        filecode = f"{mon.id}_c{costume_id}"
+        if shiny:
+            filecode += "_s"
+        url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
         print(f"[COSTUME URL] {url}")
         response = requests.get(url)
         if response.status_code != 200:
@@ -1110,57 +1118,46 @@ async def costume(ctx, *, args):
 @bot.command(pass_context=True)
 async def form(ctx, *, args):
     """
-    Usage: !form <pokemon name> [form_id] [shiny]
-    Example: !form deoxys 0034 shiny
-    If no form_id is given, returns the default icon.
-    Costume/form can be any string (number, letter, or combo).
-    Add 'shiny' as the last argument to get the shiny version.
+    Usage: !form <pokemon name> [form] [shiny]
     """
     try:
         parts = args.strip().split()
         if not parts:
-            await ctx.send("Usage: !form <pokemon name> [form_id] [shiny]")
+            await ctx.send("Usage: !form <pokemon name> [form] [shiny]")
             return
         shiny = False
         if len(parts) > 2 and parts[-1].lower() == "shiny":
             shiny = True
-            form_id = parts[-2]
+            form_query = parts[-2]
             mon_name = " ".join(parts[:-2])
         elif len(parts) > 1 and parts[-1].lower() == "shiny":
             shiny = True
-            form_id = None
+            form_query = None
             mon_name = " ".join(parts[:-1])
         elif len(parts) > 1:
-            form_id = parts[-1]
+            form_query = parts[-1]
             mon_name = " ".join(parts[:-1])
         else:
             mon_name = parts[0]
-            form_id = None
+            form_query = None
 
-        # Use the same lookup as the rest of the bot
-        try:
-            mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
-            if not hasattr(mon, "id") or not mon.id:
-                print(f"[FORM ERROR] Could not resolve Pokémon name '{mon_name}'")
-                await ctx.send(f"Could not find Pokémon: {mon_name}")
-                return
-        except Exception as e:
-            print(f"[FORM ERROR] Exception during details lookup: {e}")
+        mon = details(mon_name, bot.config['mon_icon_repo'], bot.config['language'])
+        if not hasattr(mon, "id") or not mon.id:
             await ctx.send(f"Could not find Pokémon: {mon_name}")
             return
 
-        icon_repo = bot.config.get('form_icon_repo', bot.config['mon_icon_repo'])
-        if form_id:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}_f{form_id}"
-        else:
-            url = f"{icon_repo}pokemon/{str(mon.id).zfill(1)}"
+        form_id, form_name = fuzzy_lookup_form_id(form_query) if form_query else (0, None)
+        if form_id is None:
+            await ctx.send(f"Could not find form: {form_query}")
+            return
+
+        filecode = f"{mon.id}_f{form_id}"
         if shiny:
-            url += "_s"
-        url += ".png"
+            filecode += "_s"
+        url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
         print(f"[FORM URL] {url}")
         response = requests.get(url)
         if response.status_code != 200:
-            print(f"[FORM ERROR] HTTP {response.status_code} for URL: {url}")
             await ctx.send("Could not find that Pokémon or form.")
             return
         img = Image.open(BytesIO(response.content)).convert("RGBA")
@@ -1258,43 +1255,30 @@ async def on_ready():
         trash_channel = await bot.fetch_channel(bot.config['host_channel'])
         bot.static_map = util.maps.static_map(config['static_provider'], config['static_key'], trash_channel, bot.config['mon_icon_repo'])
 
-with open("pokemon_icons_found.json", encoding="utf-8") as f:
-    pokemon_icons = json.load(f)
+with open "data/forms/formsen.json", encoding="utf-8") as f:
+    forms_data = json.load(f)
 
-def fuzzy_icon_lookup(name, form=None, costume=None, shiny=False):
-    # Normalize input
-    name = name.lower().strip()
-    if shiny and not name.startswith("shiny"):
-        name = "shiny " + name
-    elif not shiny and name.startswith("shiny "):
-        name = name[6:]
-    # Fuzzy match name
-    names = [p["name"].strip().lower() for p in pokemon_icons]
-    name_match = difflib.get_close_matches(name, names, n=5, cutoff=0.6)
-    if not name_match:
-        return None
-    # Filter by name
-    candidates = [p for p in pokemon_icons if p["name"].strip().lower() == name_match[0]]
-    # Fuzzy match form/costume if provided
-    if form:
-        form = form.lower()
-        forms = [c["form"].lower() for c in candidates]
-        form_match = difflib.get_close_matches(form, forms, n=1, cutoff=0.6)
-        if form_match:
-            candidates = [c for c in candidates if c["form"].lower() == form_match[0]]
-    if costume:
-        costume = costume.lower()
-        costumes = [c["costume"].lower() for c in candidates]
-        costume_match = difflib.get_close_matches(costume, costumes, n=1, cutoff=0.6)
-        if costume_match:
-            candidates = [c for c in candidates if c["costume"].lower() == costume_match[0]]
-    # Prefer shiny if possible
-    if shiny:
-        candidates = [c for c in candidates if c["name"].lower().startswith("shiny")]
-    else:
-        candidates = [c for c in candidates if not c["name"].lower().startswith("shiny")]
-    # Return the first match
-    return candidates[0] if candidates else None
+def fuzzy_lookup_form_id(query):
+    # Find best match for form name, return (form_id, form_name)
+    form_keys = [k for k in forms_data if k.startswith("form_")]
+    form_names = [forms_data[k].lower() for k in form_keys]
+    match = difflib.get_close_matches(query.lower(), form_names, n=1, cutoff=0.6)
+    if match:
+        for k in form_keys:
+            if forms_data[k].lower() == match[0]:
+                return int(k.split("_")[1]), forms_data[k]
+    return None, None
+
+def fuzzy_lookup_costume_id(query):
+    # Find best match for costume name, return (costume_id, costume_name)
+    costume_keys = [k for k in forms_data if k.startswith("costume_")]
+    costume_names = [forms_data[k].lower() for k in costume_keys]
+    match = difflib.get_close_matches(query.lower(), costume_names, n=1, cutoff=0.6)
+    if match:
+        for k in costume_keys:
+            if forms_data[k].lower() == match[0]:
+                return int(k.split("_")[1]), forms_data[k]
+    return None, None
 
 if __name__ == "__main__":
     for extension in extensions:
