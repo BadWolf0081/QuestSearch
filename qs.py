@@ -1151,8 +1151,12 @@ async def form(ctx, *, args):
             await ctx.send(f"Could not find form: {form_query}")
             return
 
-        print(f"[COMMAND] Calling get_api_filecode with mon.id={mon.id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}")
-        filecode = get_api_filecode(mon.id, form_id=form_id, costume_id=costume_id, shiny=shiny)
+        print(f"[COMMAND] Calling get_api_filecode with mon.id={mon.id}, form_id={form_id}, shiny={shiny}")
+        filecode = get_api_filecode(mon.id, form_id=form_id, shiny=shiny)
+        if not filecode:
+            print(f"[FORM ERROR] No filecode found for mon.id={mon.id}, form_id={form_id}, shiny={shiny}")
+            await ctx.send("Could not find that Pokémon or form (API crossref failed).")
+            return
 
         url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
         print(f"[FORM URL] {url}")
