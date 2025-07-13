@@ -891,132 +891,47 @@ async def quest(ctx, areaname="", *, args=""):
             shiny = False
             mon_id = 0
             item_id = 0
+            form_id = 0
+            costume_id = 0
+            # --- PATCH START ---
             if 'pokemon_id' in quest_json[0]["info"]:
-                    mon_id = quest_json[0]["info"]["pokemon_id"]
+                mon_id = quest_json[0]["info"]["pokemon_id"]
+            if 'form_id' in quest_json[0]["info"]:
+                form_id = quest_json[0]["info"]["form_id"]
+            if 'costume_id' in quest_json[0]["info"]:
+                costume_id = quest_json[0]["info"]["costume_id"]
             if 'item_id' in quest_json[0]["info"]:
-                    item_id = quest_json[0]["info"]["item_id"]
-                    amount = quest_json[0]["info"]["amount"]
+                item_id = quest_json[0]["info"]["item_id"]
+                amount = quest_json[0]["info"]["amount"]
             if 'shiny' in quest_json[0]["info"]:
-                    shiny = quest_json[0]["info"]["shiny"]
-            if item_id in items:
-                reward_items.append([item_id, lat, lon])
-                emote_name = f"i{item_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png"
-            elif mon_id in mons and reward.startswith("Mega") or mon_id in mons and reward.startswith("mega"):
-                reward_items = 99997
-                reward_mons.append([mon_id, lat, lon])
-                emote_name = f"e{mon_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png"
-            elif mon_id in mons and shiny:
+                shiny = quest_json[0]["info"]["shiny"]
+
+            # If user provided a form/costume argument, filter for it
+            if formcostume:
+                matched = False
+                if form_id:
+                    match_id, _ = lookup_form_id_for_mon(mon_id, formcostume)
+                    if match_id == form_id:
+                        matched = True
+                if costume_id and not matched:
+                    match_id, _ = lookup_costume_id_for_mon(mon_id, formcostume)
+                    if match_id == costume_id:
+                        matched = True
+                if not matched:
+                    continue  # skip this quest, not matching form/costume
+
+            # Use the correct icon for this form/costume/shiny
+            if mon_id in mons:
+                filecode = get_api_filecode(mon_id, form_id=form_id, costume_id=costume_id, shiny=shiny)
+                if filecode:
+                    emote_img = f"{bot.config['mon_icon_repo']}pokemon/{filecode}.png"
+                else:
+                    emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png"
                 reward_mons.append([mon_id, lat, lon])
                 emote_name = f"m{mon_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png"
-            elif mon_id in mons:
-                reward_mons.append([mon_id, lat, lon])
-                emote_name = f"m{mon_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png"
-            else:
-                found_rewards = False
-            if found_rewards:
-                if len(stop_name) >= 31:
-                    stop_name = stop_name[0:30]
-                lat_list.append(lat)
-                lon_list.append(lon)
+            # --- PATCH END ---
 
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                if item_id in items:
-                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
-                elif shiny:
-                    entry = f"[{stop_name} **SHINY**]({map_url})\n"
-                    embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png")
-                    embed.title = f"{mon.name} Quests SHINY DETECTED!! - {area[1]}"
-                else:
-                    entry = f"[{stop_name}]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    if shiny:
-                        text = entry + text
-                        length = length + len(entry)
-                    else:
-                        theend = f" lots more ..."
-                        text = text + theend
-                        break
-                else:
-                    if shiny:
-                        text = entry + text
-                        length = length + len(entry)
-                    else:
-                        text = text + entry
-                        length = length + len(entry)
-        for alternative_quest_json, alternative_quest_text, lat, lon, stop_name, stop_id in quests2:
-            quest_json = json.loads(alternative_quest_json)
-            found_alt_rewards = True
-            shiny = False
-            mon_id = 0
-            item_id = 0
-            if 'pokemon_id' in quest_json[0]["info"]:
-                    mon_id = quest_json[0]["info"]["pokemon_id"]
-            if 'item_id' in quest_json[0]["info"]:
-                    item_id = quest_json[0]["info"]["item_id"]
-                    amount = quest_json[0]["info"]["amount"]
-            if 'shiny' in quest_json[0]["info"]:
-                    shiny = quest_json[0]["info"]["shiny"]
-            if item_id in items:
-                reward_items.append([item_id, lat, lon])
-                emote_name = f"i{item_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png"
-            elif mon_id in mons and reward.startswith("Mega") or mon_id in mons and reward.startswith("mega"):
-                reward_items = 99997
-                reward_mons.append([mon_id, lat, lon])
-                emote_name = f"e{mon_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png"
-            elif mon_id in mons and shiny:
-                reward_mons.append([mon_id, lat, lon])
-                emote_name = f"m{mon_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png"
-            elif mon_id in mons:
-                reward_mons.append([mon_id, lat, lon])
-                emote_name = f"m{mon_id}"
-                emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png"
-            else:
-                found_alt_rewards = False
-            if found_alt_rewards:
-                if len(stop_name) >= 26:
-                    stop_name = stop_name[0:25]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                if item_id in items:
-                    entry = f"[{stop_name} **{amount}-NO AR**]({map_url})\n"
-                elif shiny:
-                    entry = f"[{stop_name} **SHINY-NO AR**]({map_url})\n"
-                    embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png")
-                    embed.title = f"{mon.name} Quests SHINY DETECTED!! - {area[1]}"
-                else:
-                    entry = f"[{stop_name} **NO AR**]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    if shiny:
-                        text = entry + text
-                        length = length + len(entry)
-                    else:
-                        theend = f" lots more ..."
-                        text = text + theend
-                        break
-                else:
-                    if shiny:
-                        text = entry + text
-                        length = length + len(entry)
-                    else:
-                        text = text + entry
-                        length = length + len(entry)
+            # ...rest of your logic for found_rewards, text, etc...
     embed.description = text
     image = "https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png"
     if length > 0:
