@@ -1337,7 +1337,7 @@ def lookup_form_id_for_mon(mon_id, form_query):
                 # Extract the form_id from the string, e.g. "MEOWTH_GALARIAN (2335)"
                 m = re.search(r"\((\d+)\)", entry["form"])
                 if m:
-                    return int(m.group(1)), entry["form   
+                    return int(m.group(1)), entry["form"]
     return 0, None  # fallback to default form
 
 def parse_mon_args(parts):
