@@ -308,10 +308,11 @@ def get_area(areaname):
     return area_list
 
 @bot.command(pass_context=True, aliases=bot.config['quest_aliases'])
-async def quest(ctx, areaname = "", *, reward):
-    if not isUser(ctx.author.roles, ctx.channel.id):
-        print(f"@{ctx.author.name} tried to use !quest but is no user")
-        return
+async def quest(ctx, areaname="", *, args=""):
+    parts = args.strip().split()
+    reward = parts[0] if parts else ""
+    formcostume = parts[1] if len(parts) > 1 else None
+
     footer_text = ""
     text = ""
     loading = bot.locale['loading_quests']
@@ -1336,8 +1337,7 @@ def lookup_form_id_for_mon(mon_id, form_query):
                 # Extract the form_id from the string, e.g. "MEOWTH_GALARIAN (2335)"
                 m = re.search(r"\((\d+)\)", entry["form"])
                 if m:
-                    return int(m.group(1)), entry["form"]
-   
+                    return int(m.group(1)), entry["form   
     return 0, None  # fallback to default form
 
 def parse_mon_args(parts):
