@@ -42,6 +42,11 @@ class static_map:
         return min(lat_zoom, lon_zoom)
 
     async def quest(self, lat, lon, items, mons, custom_emotes):
+        print(f"[STATIC MAP DEBUG] lat: {lat} ({type(lat)})")
+        print(f"[STATIC MAP DEBUG] lon: {lon} ({type(lon)})")
+        print(f"[STATIC MAP DEBUG] items: {items} ({type(items)})")
+        print(f"[STATIC MAP DEBUG] mons: {mons} ({type(mons)})")
+        print(f"[STATIC MAP DEBUG] custom_emotes: {custom_emotes} ({type(custom_emotes)})")
         width = 1000
         height = 600
         ne = [max(lat), max(lon)]
