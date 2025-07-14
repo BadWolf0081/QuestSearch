@@ -184,11 +184,9 @@ async def setup(bot):
                                 lon_list.append(lon)
                                 mons.append((pokedex_id, lat, lon))
 
-                    if mons:
-                        # Optionally, send the embed first and then update with the map (like !q)
+                    if mons and isinstance(lat_list, list) and isinstance(lon_list, list):
                         msg = await ctx.send(embed=embed)
                         try:
-                            # Add a short delay to ensure Discord processes the message before editing
                             import asyncio
                             await asyncio.sleep(1)
                             static_map_url = await bot.static_map.quest(
