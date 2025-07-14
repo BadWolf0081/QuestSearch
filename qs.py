@@ -1,6 +1,7 @@
 import discord
 import json
 import asyncio
+import re
 import aiomysql
 import requests
 from PIL import Image
