@@ -61,7 +61,12 @@ async def setup(bot):
             if not pokemon_entry:
                 await ctx.send(f"Could not find Pokémon: {pokemon_name}")
                 return
-            pokedex_id = int(pokemon_entry["pokedex"].replace("(", "").replace(")", ""))
+            match = re.search(r"(\d+)", pokemon_entry["pokedex"])
+            if match:
+                pokedex_id = int(match.group(1))
+            else:
+                await ctx.send(f"Could not extract Pokédex number for {pokemon_name}")
+                return
 
             # --- 3. Check for icon existence in index.json ---
             def search_icon_index(obj, filename):
