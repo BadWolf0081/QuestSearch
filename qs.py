@@ -198,6 +198,8 @@ async def quest(ctx, areaname="", *, args=""):
     text = ""
     loading = bot.locale['loading_quests']
 
+    embed = discord.Embed()  # <-- ADD THIS LINE
+
     area = get_area(areaname)
     if not area[1] == bot.locale['all']:
         footer_text = area[1]
