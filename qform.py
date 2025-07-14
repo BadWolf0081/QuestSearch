@@ -102,50 +102,44 @@ async def setup(bot):
                 # --- Handle form logic ---
                 form_query_clean = form_query.strip().lower() if form_query else ""
                 use_no_form = not form_query
-                use_normal = form_query_clean == "normal"
-                found_form_id = None
+                form_id_for_mon = None
                 form_name = None
-                icon_url = None
 
-                def search_icon_index(obj, filename):
-                    if isinstance(obj, list):
-                        return filename in obj
-                    elif isinstance(obj, dict):
-                        for v in obj.values():
-                            if search_icon_index(v, filename):
-                                return True
-                    return False
+                if str(pokedex_id) in forms_lang and not use_no_form:
+                    # Always search values for the form name (case-insensitive)
+                    for fid, fname in forms_lang[str(pokedex_id)].items():
+                        if fname.strip().lower() == form_query_clean:
+                            form_id_for_mon = fid
+                            form_name = fname
+                            break
+                    # Fuzzy match if not exact
+                    if not form_id_for_mon and form_query:
+                        all_names = [fname.lower() for fname in forms_lang[str(pokedex_id)].values()]
+                        close = difflib.get_close_matches(form_query_clean, all_names, n=1, cutoff=0.7)
+                        if close:
+                            for fid, fname in forms_lang[str(pokedex_id)].items():
+                                if fname.lower() == close[0]:
+                                    form_id_for_mon = fid
+                                    form_name = fname
+                                    break
 
                 if use_no_form:
-                    # No form specified: only match quests with no form or form_id 0
                     icon_filename = f"{pokedex_id}.png"
                     if not search_icon_index(icon_index, icon_filename):
                         await ctx.send(f"No valid icon found for {pokemon_name} (no form)")
                         return
                     icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
                     form_name = "No Form"
-                    found_form_id = 0  # For clarity, but not used for matching
-                elif use_normal:
-                    normal_form_id = None
-                    # Search values for "Normal" (case-insensitive)
-                    if str(pokedex_id) in forms_lang:
-                        for fid, fname in forms_lang[str(pokedex_id)].items():
-                            if fname.strip().lower() == "normal":
-                                normal_form_id = fid
-                                break
-                    if normal_form_id is None:
-                        await ctx.send(f"No form named 'Normal' found for {pokemon_name}")
-                        return
-
-                    icon_filename = f"{pokedex_id}_f{normal_form_id}.png"
+                    found_form_id = 0
+                elif form_id_for_mon:
+                    icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
                     if not search_icon_index(icon_index, icon_filename):
-                        await ctx.send(f"No valid icon found for {pokemon_name} (Normal form)")
+                        await ctx.send(f"No valid icon found for {pokemon_name} (form: {form_name})")
                         return
                     icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
-                    form_name = "Normal"
-                    found_form_id = int(normal_form_id)
+                    found_form_id = int(form_id_for_mon)
                 else:
-                    # ...your existing form/costume logic...
+                    # ...existing fallback/costume logic...
                     pass
 
             if form_id_for_mon:
@@ -169,48 +163,42 @@ async def setup(bot):
                 # --- Handle form logic ---
                 form_query_clean = form_query.strip().lower() if form_query else ""
                 use_no_form = not form_query
-                use_normal = form_query_clean == "normal"
-                found_form_id = None
+                form_id_for_mon = None
                 form_name = None
-                icon_url = None
 
-                def search_icon_index(obj, filename):
-                    if isinstance(obj, list):
-                        return filename in obj
-                    elif isinstance(obj, dict):
-                        for v in obj.values():
-                            if search_icon_index(v, filename):
-                                return True
-                    return False
+                if str(pokedex_id) in forms_lang and not use_no_form:
+                    # Always search values for the form name (case-insensitive)
+                    for fid, fname in forms_lang[str(pokedex_id)].items():
+                        if fname.strip().lower() == form_query_clean:
+                            form_id_for_mon = fid
+                            form_name = fname
+                            break
+                    # Fuzzy match if not exact
+                    if not form_id_for_mon and form_query:
+                        all_names = [fname.lower() for fname in forms_lang[str(pokedex_id)].values()]
+                        close = difflib.get_close_matches(form_query_clean, all_names, n=1, cutoff=0.7)
+                        if close:
+                            for fid, fname in forms_lang[str(pokedex_id)].items():
+                                if fname.lower() == close[0]:
+                                    form_id_for_mon = fid
+                                    form_name = fname
+                                    break
 
                 if use_no_form:
-                    # No form specified: only match quests with no form or form_id 0
                     icon_filename = f"{pokedex_id}.png"
                     if not search_icon_index(icon_index, icon_filename):
                         await ctx.send(f"No valid icon found for {pokemon_name} (no form)")
                         return
                     icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
                     form_name = "No Form"
-                    found_form_id = 0  # For clarity, but not used for matching
-                elif use_normal:
-                    normal_form_id = None
-                    # Search values for "Normal" (case-insensitive)
-                    if str(pokedex_id) in forms_lang:
-                        for fid, fname in forms_lang[str(pokedex_id)].items():
-                            if fname.strip().lower() == "normal":
-                                normal_form_id = fid
-                                break
-                    if normal_form_id is None:
-                        await ctx.send(f"No form named 'Normal' found for {pokemon_name}")
-                        return
-
-                    icon_filename = f"{pokedex_id}_f{normal_form_id}.png"
+                    found_form_id = 0
+                elif form_id_for_mon:
+                    icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
                     if not search_icon_index(icon_index, icon_filename):
-                        await ctx.send(f"No valid icon found for {pokemon_name} (Normal form)")
+                        await ctx.send(f"No valid icon found for {pokemon_name} (form: {form_name})")
                         return
                     icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
-                    form_name = "Normal"
-                    found_form_id = int(normal_form_id)
+                    found_form_id = int(form_id_for_mon)
                 else:
                     # Use form logic as before
                     form_ids = get_form_ids_by_name(form_query, formsen)
@@ -330,7 +318,7 @@ async def setup(bot):
                         map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
                         stop_name_short = stop_name[:30]
                         entries.append(f"[{stop_name_short}]({map_url})")
-                elif use_normal:
+                elif form_id_for_mon:
                     if int(q_form_id) == int(found_form_id):
                         found = True
                         map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
