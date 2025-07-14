@@ -440,3 +440,12 @@ async def setup(bot):
             print(f"[QFORM ERROR] {str(e)}")
 
     bot.command(name="qform")(qform)  # <-- Add this line to register the command
+
+def search_icon_index(obj, filename):
+    if isinstance(obj, list):
+        return filename in obj
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            if search_icon_index(v, filename):
+                return True
+    return False
