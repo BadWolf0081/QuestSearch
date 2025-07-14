@@ -95,8 +95,11 @@ async def setup(bot):
 
             logging.debug(f"[QFORM] Final form_id_for_mon={form_id_for_mon}, form_name={form_name}")
 
-            if form_id_for_mon:
-                # Special case: "Normal" form (form_id 0) uses the base icon
+            # After parsing arguments, before any form logic:
+            form_query_clean = form_query.strip().lower() if form_query else ""
+            use_no_form = not form_query
+
+            if form_id_for_mon is not None:
                 if int(form_id_for_mon) == 0:
                     icon_filename = f"{pokedex_id}.png"
                 else:
