@@ -151,6 +151,37 @@ def get_area(areaname):
     area_list = [stringfence, namefence]
     return area_list
 
+# --- Helper Functions for DRY code ---
+
+def make_loading_embed(title, text, loading):
+    loading_img = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif"
+    embed = discord.Embed(title=title, description=text)
+    embed.set_image(url=loading_img)
+    embed.set_footer(text=loading, icon_url=loading_img)
+    return embed
+
+def get_map_url(lat, lon, stop_id=None):
+    if bot.config['use_map']:
+        if stop_id is not None:
+            return bot.map_url.quest(lat, lon, stop_id)
+        else:
+            return bot.map_url.quest(lat, lon)
+    else:
+        return f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+
+def truncate_stop_name(stop_name, max_len):
+    return stop_name[:max_len] if len(stop_name) > max_len else stop_name
+
+def make_entry(stop_name, extra, map_url):
+    if extra:
+        return f"[{stop_name} **{extra}**]({map_url})\n"
+    else:
+        return f"[{stop_name}]({map_url})\n"
+
+def set_shiny_embed(embed, mon, area):
+    embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png")
+    embed.title = f"{mon.name} Quests SHINY DETECTED!! - {area[1]}"
+
 @bot.command(pass_context=True, aliases=bot.config['quest_aliases'])
 async def quest(ctx, areaname="", *, args=""):
     parts = args.strip().split()
@@ -168,74 +199,33 @@ async def quest(ctx, areaname="", *, args=""):
 
     print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
 
+    # Use helper for loading embed
     if area[1] == "Unknown Area":
-        embed = discord.Embed(title=bot.locale['no_area_found'], description=text)
+        embed = make_loading_embed(bot.locale['no_area_found'], text, loading)
     elif reward.startswith("Mega") or reward.startswith("mega"):
-        embed = discord.Embed(title=bot.locale['mega'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed = make_loading_embed(bot.locale['mega'], text, loading)
     elif reward.startswith("Lure") or reward.startswith("lure"):
-        embed = discord.Embed(title=bot.locale['active_lures'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward.startswith("Station") or reward.startswith("Power") or reward.startswith("Station") or reward.startswith("power"):
-        embed = discord.Embed(title=bot.locale['station'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed = make_loading_embed(bot.locale['active_lures'], text, loading)
+    elif reward.startswith("Station") or reward.startswith("Power") or reward.startswith("station") or reward.startswith("power"):
+        embed = make_loading_embed(bot.locale['station'], text, loading)
     elif reward.startswith("Showcase") or reward.startswith("showcase"):
-        embed = discord.Embed(title=bot.locale['showcase'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed = make_loading_embed(bot.locale['showcase'], text, loading)
     elif reward.startswith("Giovan") or reward.startswith("giovan"):
-        embed = discord.Embed(title=bot.locale['giovani'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed = make_loading_embed(bot.locale['giovani'], text, loading)
     elif reward.startswith("Leader") or reward.startswith("leader"):
-        embed = discord.Embed(title=bot.locale['leaders'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward == "Stardust":
-        embed = discord.Embed(title=bot.locale['quests'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed = make_loading_embed(bot.locale['leaders'], text, loading)
+    elif reward == "Stardust" or reward == "stardust":
+        embed = make_loading_embed(bot.locale['quests'], text, loading)
     elif reward.startswith("Route") or reward.startswith("route"):
-        embed = discord.Embed(title=bot.locale['routes'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward == "stardust":
-        embed = discord.Embed(title=bot.locale['quests'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward == "Kecleon":
-        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward == "kecleon":
-        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward == "keckleon":
-        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward == "Keckleon":
-        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward == "Coins":
-        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-    elif reward == "coins":
-        embed = discord.Embed(title=bot.locale['eventstop'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed = make_loading_embed(bot.locale['routes'], text, loading)
+    elif reward.lower() in ["kecleon", "keckleon"]:
+        embed = make_loading_embed(bot.locale['eventstop'], text, loading)
+    elif reward.lower() == "coins":
+        embed = make_loading_embed(bot.locale['eventstop'], text, loading)
     else:
-        embed = discord.Embed(title=bot.locale['quests'], description=text)
-        embed.set_image(url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
-        embed.set_footer(text=loading, icon_url="https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif")
+        embed = make_loading_embed(bot.locale['quests'], text, loading)
     message = await ctx.send(embed=embed)
-    
+
     items = list()
     mons = list()
     item_found = False
