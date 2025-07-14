@@ -305,7 +305,7 @@ async def setup(bot):
                                     forms_list = "\n".join(f"- {fname}" for fname in available_forms)
                                     await ctx.send(
                                         embed=discord.Embed(
-                                            title=f"No valid icon found for {pokemon_name.title()} with form '{form_query}'",
+                                            title=f"No valid icon found for {pokemon_name} with form '{form_query}'",
                                             description=f"Available forms for {pokemon_name.title()}:\n{forms_list}",
                                             color=discord.Color.orange()
                                         )
@@ -398,7 +398,18 @@ async def setup(bot):
                                 if use_costume:
                                     mons.append((f"{pokedex_id}_c{costume_id_for_match}", lat, lon))
                                 elif found_form_id:
-                                    mons.append((f"{pokedex_id}_f{found_form_id}", lat, lon))
+                                    # Check if this form is "Normal"
+                                    normal_names = ["normal"]
+                                    # Try to get the form name for this form ID
+                                    form_name_for_map = None
+                                    if str(pokedex_id) in forms_lang and str(found_form_id) in forms_lang[str(pokedex_id)]:
+                                        form_name_for_map = forms_lang[str(pokedex_id)][str(found_form_id)].strip().lower()
+                                    elif f"form_{found_form_id}" in formsen:
+                                        form_name_for_map = formsen[f"form_{found_form_id}"].strip().lower()
+                                    if form_name_for_map in normal_names:
+                                        mons.append((str(pokedex_id), lat, lon))
+                                    else:
+                                        mons.append((f"{pokedex_id}_f{found_form_id}", lat, lon))
                                 else:
                                     mons.append((pokedex_id, lat, lon))
                                 lat_list.append(lat)
