@@ -106,7 +106,7 @@ async def setup(bot):
                 form_name = None
 
                 if str(pokedex_id) in forms_lang and not use_no_form:
-                    # Always search values for the form name (case-insensitive)
+                    # Always search values for the form name (case-insensitive, strip whitespace)
                     for fid, fname in forms_lang[str(pokedex_id)].items():
                         if fname.strip().lower() == form_query_clean:
                             form_id_for_mon = fid
@@ -131,7 +131,7 @@ async def setup(bot):
                     icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
                     form_name = "No Form"
                     found_form_id = 0
-                elif form_id_for_mon:
+                elif form_id_for_mon is not None:
                     icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
                     if not search_icon_index(icon_index, icon_filename):
                         await ctx.send(f"No valid icon found for {pokemon_name} (form: {form_name})")
@@ -140,7 +140,14 @@ async def setup(bot):
                     found_form_id = int(form_id_for_mon)
                 else:
                     # ...existing fallback/costume logic...
-                    pass
+                    await ctx.send(
+                        embed=discord.Embed(
+                            title=f"{pokemon_name.title()} ({form_query.title()}) Quests - {area[1]}",
+                            description=f"Could not find any form or costume matching '{form_query}'",
+                            color=discord.Color.red()
+                        )
+                    )
+                    return
 
             if form_id_for_mon:
                 icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
@@ -167,7 +174,7 @@ async def setup(bot):
                 form_name = None
 
                 if str(pokedex_id) in forms_lang and not use_no_form:
-                    # Always search values for the form name (case-insensitive)
+                    # Always search values for the form name (case-insensitive, strip whitespace)
                     for fid, fname in forms_lang[str(pokedex_id)].items():
                         if fname.strip().lower() == form_query_clean:
                             form_id_for_mon = fid
@@ -192,7 +199,7 @@ async def setup(bot):
                     icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
                     form_name = "No Form"
                     found_form_id = 0
-                elif form_id_for_mon:
+                elif form_id_for_mon is not None:
                     icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
                     if not search_icon_index(icon_index, icon_filename):
                         await ctx.send(f"No valid icon found for {pokemon_name} (form: {form_name})")
