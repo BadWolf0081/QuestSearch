@@ -79,11 +79,19 @@ async def setup(bot):
             # --- Check if the icon file exists in index.json (valid form for this Pokémon) ---
             icon_filename = f"{pokedex_id}_f{form_id}.png"
             valid_form = False
-            # icon_index is a dict of lists, search all lists for the filename
-            for file_list in icon_index.values():
-                if icon_filename in file_list:
-                    valid_form = True
-                    break
+
+            def search_icon_index(obj, filename):
+                """Recursively search for filename in any list value in obj."""
+                if isinstance(obj, list):
+                    return filename in obj
+                elif isinstance(obj, dict):
+                    for v in obj.values():
+                        if search_icon_index(v, filename):
+                            return True
+                return False
+
+            if search_icon_index(icon_index, icon_filename):
+                valid_form = True
 
             if not valid_form:
                 await ctx.send(f"Form '{form_query}' is not valid for {pokemon_name}")
