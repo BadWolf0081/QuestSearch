@@ -65,7 +65,10 @@ async def setup(bot):
             icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png" if filecode else ""
 
             for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
-                quest_info = json.loads(quest_json)[0]["info"]
+                quest_list = json.loads(quest_json)
+                if not quest_list or "info" not in quest_list[0]:
+                    continue  # skip empty or malformed quest entries
+                quest_info = quest_list[0]["info"]
                 q_form_id = quest_info.get("form_id", 0)
                 if int(q_form_id) == int(form_id):
                     found = True
