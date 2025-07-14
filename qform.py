@@ -22,57 +22,6 @@ async def setup(bot):
                 await ctx.send(f"Unknown area: {areaname}")
                 return
 
-            # --- Combine all arguments into a list, filter out empty strings ---
-            args = [areaname, pokemon_name, form_query]
-            args = [a for a in args if a]
-
-            # --- Load area names, Pokémon names, and form names for matching ---
-            area_names = [a.lower() for a in bot.geofences.keys()]
-            # Use poke_lookup for Pokémon names
-            pokemon_names = [p["name"].lower() for p in bot.poke_lookup]
-            # Load form names from formsen.json
-            with open("data/forms/formsen.json", encoding="utf-8") as f:
-                formsen = json.load(f)
-            form_names = set(v.lower() for k, v in formsen.items() if k.startswith("form_"))
-
-            # --- Initialize detected variables ---
-            detected_area = None
-            detected_pokemon = None
-            detected_form = None
-
-            for arg in args:
-                arg_l = arg.lower()
-                if not detected_area and arg_l in area_names:
-                    detected_area = arg
-                    continue
-                if not detected_pokemon and arg_l in pokemon_names:
-                    detected_pokemon = arg
-                    continue
-                if not detected_form and arg_l in form_names:
-                    detected_form = arg
-                    continue
-
-            # --- Fallback: try fuzzy matching if not all detected ---
-            if not detected_area:
-                detected_area = difflib.get_close_matches(args[0].lower(), area_names, n=1, cutoff=0.7)
-                detected_area = detected_area[0] if detected_area else None
-            if not detected_pokemon:
-                detected_pokemon = difflib.get_close_matches(args[1].lower(), pokemon_names, n=1, cutoff=0.7)
-                detected_pokemon = detected_pokemon[0] if detected_pokemon else None
-            if not detected_form and len(args) > 2:
-                detected_form = difflib.get_close_matches(args[2].lower(), list(form_names), n=1, cutoff=0.7)
-                detected_form = detected_form[0] if detected_form else None
-
-            # --- If still missing required info, prompt user ---
-            if not detected_area or not detected_pokemon:
-                await ctx.send("Usage: !qform <area> <pokemon name> [form]")
-                return
-
-            # --- Use detected variables for the rest of your logic ---
-            areaname = detected_area
-            pokemon_name = detected_pokemon
-            form_query = detected_form if detected_form else ""
-
             # --- Load formsen.json for form name/id mapping ---
             with open("data/forms/formsen.json", encoding="utf-8") as f:
                 formsen = json.load(f)
