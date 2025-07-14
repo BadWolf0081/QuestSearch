@@ -958,6 +958,7 @@ async def custom(ctx, *, args):
     except Exception as e:
         print(f"[CUSTOM ERROR] {e}")
         await ctx.send("Could not find that Pokémon or custom icon.")
+bot.get_area = get_area
 bot.poke_lookup = poke_lookup
 bot.lookup_form_id_for_mon = lambda mon_id, form_query: lookup_form_id_for_mon(mon_id, form_query, poke_lookup)
 bot.lookup_costume_id_for_mon = lambda mon_id, costume_query: lookup_costume_id_for_mon(mon_id, costume_query, poke_lookup)
