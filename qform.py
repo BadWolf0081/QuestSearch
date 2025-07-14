@@ -494,3 +494,8 @@ def search_icon_index(obj, filename):
             if search_icon_index(v, filename):
                 return True
     return False
+
+def lookup_form_id_for_mon(mon_id, form_query, poke_lookup):
+    # ...existing code...
+    print(f"[LOOKUP DEBUG] No match for form_query='{form_query}' in candidates: {list(form_map.keys())}")
+    return None
