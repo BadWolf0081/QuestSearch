@@ -77,22 +77,47 @@ async def setup(bot):
                 # Use form logic as before
                 form_ids = get_form_ids_by_name(form_query, formsen)
                 if not form_ids:
-                    await ctx.send(f"Could not find any form matching '{form_query}'")
-                    return
-                def search_icon_index(obj, filename):
-                    if isinstance(obj, list):
-                        return filename in obj
-                    elif isinstance(obj, dict):
-                        for v in obj.values():
-                            if search_icon_index(v, filename):
-                                return True
-                    return False
-                for form_id in form_ids:
-                    icon_filename = f"{pokedex_id}_f{form_id}.png"
-                    if search_icon_index(icon_index, icon_filename):
-                        found_form_id = form_id
-                        break
-                if not found_form_id:
+                    # Try costume match if no form match
+                    costume_ids = []
+                    costume_map = {int(k.replace("costume_", "")): v for k, v in formsen.items() if k.startswith("costume_")}
+                    matches = [cid for cid, name in costume_map.items() if name.lower() == form_query.lower()]
+                    if matches:
+                        costume_ids = matches
+                    else:
+                        close = difflib.get_close_matches(form_query.lower(), [v.lower() for v in costume_map.values()], n=5, cutoff=0.7)
+                        if close:
+                            costume_ids = [cid for cid, name in costume_map.items() if name.lower() in close]
+                    if costume_ids:
+                        found_costume_id = costume_ids[0]
+                        icon_filename = f"{pokedex_id}_c{found_costume_id}.png"
+                        def search_icon_index(obj, filename):
+                            if isinstance(obj, list):
+                                return filename in obj
+                            elif isinstance(obj, dict):
+                                for v in obj.values():
+                                    if search_icon_index(v, filename):
+                                        return True
+                            return False
+                        if not search_icon_index(icon_index, icon_filename):
+                            icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{pokedex_id}_c{found_costume_id}.png"
+                            found_form_id = None
+                            form_name = form_query.title()
+                            # No icon found, but still show embed with icon
+                        else:
+                            icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{pokedex_id}_c{found_costume_id}.png"
+                            found_form_id = None
+                            form_name = form_query.title()
+                        # Set a flag to use costume_id for quest matching
+                        use_costume = True
+                        costume_id_for_match = found_costume_id
+                    else:
+                        await ctx.send(f"Could not find any form or costume matching '{form_query}'")
+                        return
+                else:
+                    use_costume = False
+                    costume_id_for_match = None
+                # ...existing code...
+                if not search_icon_index(icon_index, icon_filename):
                     await ctx.send(f"No valid icon found for {pokemon_name} with form '{form_query}'")
                     return
                 form_name = formsen.get(f"form_{found_form_id}", form_query.title())
