@@ -1421,4 +1421,7 @@ async def main():
     await bot.start(bot.config['bot_token'])
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        print("Bot shutdown requested. Exiting cleanly.")
