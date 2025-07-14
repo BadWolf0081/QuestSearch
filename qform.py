@@ -186,7 +186,23 @@ async def setup(bot):
                                 form_name = "Normal"
                                 found_form_id = None
                             else:
-                                await ctx.send(f"No valid icon found for {pokemon_name} with form '{form_query}'")
+                                # No valid icon found for any form, so list available forms for this Pokémon
+                                # Get all form IDs for this Pokémon from the language file
+                                available_forms = []
+                                if str(pokedex_id) in forms_lang:
+                                    for fid, fname in forms_lang[str(pokedex_id)].items():
+                                        available_forms.append(fname)
+                                if available_forms:
+                                    forms_list = "\n".join(f"- {fname}" for fname in available_forms)
+                                    await ctx.send(
+                                        embed=discord.Embed(
+                                            title=f"No valid icon found for {pokemon_name.title()} with form '{form_query}'",
+                                            description=f"Available forms for {pokemon_name.title()}:\n{forms_list}",
+                                            color=discord.Color.orange()
+                                        )
+                                    )
+                                else:
+                                    await ctx.send(f"No valid icon or forms found for {pokemon_name} with form '{form_query}'")
                                 return
 
             print(f"[QFORM] Area: {area[1]}, Pokémon: {pokemon_name}, Form: {form_name} (id={found_form_id})")
