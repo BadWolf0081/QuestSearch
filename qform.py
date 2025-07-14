@@ -321,24 +321,20 @@ async def setup(bot):
                     if q_form_id is not None:
                         available_form_ids.add(int(q_form_id))
 
-                # Remove 0 (Normal) if you want only special forms, or keep it to show all
-                # available_form_ids.discard(0)
-
-                # Map form IDs to names using forms_lang
+                # Build a list of (form_id, form_name) tuples, using all available sources
                 available_forms = []
-                if str(pokedex_id) in forms_lang:
-                    for fid in available_form_ids:
-                        fname = forms_lang[str(pokedex_id)].get(str(fid), f"Form {fid}")
-                        available_forms.append(fname)
+                for fid in sorted(available_form_ids):
+                    fname = None
+                    if str(pokedex_id) in forms_lang:
+                        fname = forms_lang[str(pokedex_id)].get(str(fid))
+                    if not fname:
+                        fname = formsen.get(f"form_{fid}")
+                    if not fname:
+                        fname = f"Form {fid}"
+                    available_forms.append((fid, fname))
+
                 if available_forms:
-                    # Show both form name and form ID for clarity
-                    forms_list = "\n".join(
-                        f"- {fname} (ID: {fid})"
-                        for fid, fname in [
-                            (fid, forms_lang[str(pokedex_id)].get(str(fid), f"Form {fid}"))
-                            for fid in available_form_ids
-                        ]
-                    )
+                    forms_list = "\n".join(f"- {fname} (ID: {fid})" for fid, fname in available_forms)
                     await ctx.send(
                         embed=discord.Embed(
                             title=f"No quests found for {pokemon_name.title()} with form '{form_name}' in {area[1]}",
