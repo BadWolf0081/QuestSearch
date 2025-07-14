@@ -68,23 +68,32 @@ async def setup(bot):
             with open(f"data/forms/{form_lang}.json", encoding="utf-8") as f:
                 forms_lang = json.load(f)
 
-            if str(pokedex_id) in forms_lang:
-                # Try to match the form name for this Pokémon
-                for fid, fname in forms_lang[str(pokedex_id)].items():
-                    if fname.lower() == form_query.strip().lower():
-                        form_id_for_mon = fid
-                        form_name = fname
-                        break
-                # Fuzzy match if not exact
-                if not form_id_for_mon:
-                    all_names = [fname.lower() for fname in forms_lang[str(pokedex_id)].values()]
-                    close = difflib.get_close_matches(form_query.strip().lower(), all_names, n=1, cutoff=0.7)
-                    if close:
-                        for fid, fname in forms_lang[str(pokedex_id)].items():
-                            if fname.lower() == close[0]:
-                                form_id_for_mon = fid
-                                form_name = fname
-                                break
+            # Use the bot's robust lookup function
+            if hasattr(bot, "lookup_form_id_for_mon"):
+                result = bot.lookup_form_id_for_mon(pokedex_id, form_query)
+                if result:
+                    form_id_for_mon, form_name = result
+                    logging.info(f"[QFORM] lookup_form_id_for_mon found: fid={form_id_for_mon}, fname='{form_name}'")
+            else:
+                # fallback to old logic if needed
+                if str(pokedex_id) in forms_lang:
+                    for fid, fname in forms_lang[str(pokedex_id)].items():
+                        if fname.strip().lower() == form_query.strip().lower():
+                            form_id_for_mon = fid
+                            form_name = fname
+                            break
+                    # Fuzzy match if not exact
+                    if not form_id_for_mon and form_query:
+                        all_names = [fname.strip().lower() for fname in forms_lang[str(pokedex_id)].values()]
+                        close = difflib.get_close_matches(form_query.strip().lower(), all_names, n=1, cutoff=0.7)
+                        if close:
+                            for fid, fname in forms_lang[str(pokedex_id)].items():
+                                if fname.strip().lower() == close[0]:
+                                    form_id_for_mon = fid
+                                    form_name = fname
+                                    break
+
+            logging.debug(f"[QFORM] Final form_id_for_mon={form_id_for_mon}, form_name={form_name}")
 
             if form_id_for_mon:
                 icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
