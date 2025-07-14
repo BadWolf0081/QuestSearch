@@ -109,11 +109,13 @@ async def setup(bot):
                 else:
                     use_costume = False
                     costume_id_for_match = None
-                if not search_icon_index(icon_index, icon_filename):
-                    await ctx.send(f"No valid icon found for {pokemon_name} with form '{form_query}'")
-                    return
-                form_name = formsen.get(f"form_{found_form_id}", form_query.title())
-                icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{pokedex_id}_f{found_form_id}.png"
+                    found_form_id = form_ids[0]
+                    icon_filename = f"{pokedex_id}_f{found_form_id}.png"
+                    if not search_icon_index(icon_index, icon_filename):
+                        await ctx.send(f"No valid icon found for {pokemon_name} with form '{form_query}'")
+                        return
+                    form_name = formsen.get(f"form_{found_form_id}", form_query.title())
+                    icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{pokedex_id}_f{found_form_id}.png"
 
             print(f"[QFORM] Area: {area[1]}, Pokémon: {pokemon_name}, Form: {form_name} (id={found_form_id})")
 
