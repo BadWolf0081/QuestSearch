@@ -225,40 +225,46 @@ async def quest(ctx, areaname="", *, args=""):
             quests2 = await get_alt_dataitem(bot.config, area, item_id)
     if not item_found:
         mon = details(reward, bot.config['mon_icon_repo'], bot.config['language'])
-        if reward.startswith("Mega") or reward.startswith("mega"):
+        reward_lower = reward.lower()
+
+        def add_lat_lon(lat, lon):
+            lat_list.append(lat)
+            lon_list.append(lon)
+
+        if reward_lower.startswith("mega"):
             embed.title = f"{mon.name} {bot.locale['mega']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png")
             quests = await get_datamega(bot.config, area)
             quests2 = await get_alt_datamega(bot.config, area)
-        elif reward.startswith("Showcase") or reward.startswith("showcase"):
+        elif reward_lower.startswith("showcase"):
             embed.title = f"{mon.name} {bot.locale['showcase']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/showcase.png")
             quests = await get_datashow(bot.config, area)
-        elif reward.startswith("station") or reward.startswith("Power") or reward.startswith("Station") or reward.startswith("power"):
+        elif reward_lower.startswith("station") or reward_lower.startswith("power"):
             embed.title = f"{bot.locale['station']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/showcase.png")
             quests = await get_stations(bot.config, area)
-        elif reward.startswith("Lure") or reward.startswith("lure"):
+        elif reward_lower.startswith("lure"):
             embed.title = f"{bot.locale['active_lures']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokestop/501.png")
             quests = await get_lures(bot.config, area)
-        elif reward.startswith("Route") or reward.startswith("route"):
+        elif reward_lower.startswith("route"):
             embed.title = f"{bot.locale['routes']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/route-start.png")
             quests = await get_dataroute(bot.config, area)
-        elif reward.startswith("Giovan") or reward.startswith("giovan"):
+        elif reward_lower.startswith("giovan"):
             embed.title = f"{bot.locale['giovani']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/44.png")
             quests = await get_datagiovani(bot.config, area)
-        elif reward.startswith("Sierra") or reward.startswith("sierra"):
+        elif reward_lower.startswith("sierra"):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/43.png")
             quests = await get_dataleaders(bot.config, area, 43)
-        elif reward.startswith("Arlo") or reward.startswith("arlo"):
+        elif reward_lower.startswith("arlo"):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/42.png")
             quests = await get_dataleaders(bot.config, area, 42)
-        elif reward.startswith("Cliff") or reward.startswith("cliff"):
+        elif reward_lower.startswith("cliff"):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/41.png")
             quests = await get_dataleaders(bot.config, area, 41)
