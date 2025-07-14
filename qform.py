@@ -1,5 +1,6 @@
 import discord
 import json
+import re
 from discord.ext import commands
 
 async def setup(bot):
@@ -27,11 +28,30 @@ async def setup(bot):
                 return
 
             mon_id = int(mon['pokedex'].split('(')[-1].replace(')', '').strip())
-            form_id, form_name = bot.lookup_form_id_for_mon(
-                mon_id=mon_id,
-                form_query=form_query
-            )
-            if not form_name:
+
+            # --- Regional form lookup logic ---
+            # Load formsen.json and poke_lookup (api.json) from bot or disk
+            with open("data/forms/formsen.json", encoding="utf-8") as f:
+                formsen = json.load(f)
+            poke_lookup = bot.poke_lookup  # or load from api.json if not already loaded
+
+            # Find all form keys containing the form_query (case-insensitive, fuzzy)
+            form_query_lower = form_query.lower()
+            regional_forms = [(k, v) for k, v in formsen.items() if form_query_lower in v.lower()]
+            regional_form_ids = [int(k.split("_")[1]) for k, v in regional_forms]
+
+            # Cross-reference with poke_lookup
+            form_id = None
+            form_name = None
+            for entry in poke_lookup:
+                if f"({mon_id})" in entry["pokedex"]:
+                    m = re.search(r"\((\d+)\)", entry["form"])
+                    if m and int(m.group(1)) in regional_form_ids:
+                        form_id = int(m.group(1))
+                        form_name = entry["form"]
+                        break
+
+            if not form_id:
                 await ctx.send(f"Could not find form '{form_query}' for {mon['name']}")
                 return
 
