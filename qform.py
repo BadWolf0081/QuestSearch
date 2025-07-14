@@ -1,6 +1,7 @@
 import discord
 import json
 import re
+import difflib
 from discord.ext import commands
 
 async def setup(bot):
@@ -29,27 +30,40 @@ async def setup(bot):
 
             mon_id = int(mon['pokedex'].split('(')[-1].replace(')', '').strip())
 
+            def find_form_id_for_mon(mon_id, form_query, formsen, poke_lookup):
+                # 1. Fuzzy match form_query to formsen values (case-insensitive, partial match)
+                form_names = [v.lower() for k, v in formsen.items() if k.startswith("form_")]
+                matches = difflib.get_close_matches(form_query.lower(), form_names, n=5, cutoff=0.6)
+                if not matches:
+                    # Try substring match as fallback
+                    matches = [v for k, v in formsen.items() if k.startswith("form_") and form_query.lower() in v.lower()]
+                if not matches:
+                    return None, None
+
+                # 2. Collect all form IDs that match
+                matched_form_ids = []
+                for k, v in formsen.items():
+                    if k.startswith("form_") and v.lower() in matches:
+                        try:
+                            matched_form_ids.append(int(k.split("_")[1]))
+                        except Exception:
+                            continue
+
+                # 3. For each matching form ID, check if it exists for this Pokémon in poke_lookup
+                for entry in poke_lookup:
+                    if f"({mon_id})" in entry["pokedex"]:
+                        m = re.search(r"\((\d+)\)", entry["form"])
+                        if m and int(m.group(1)) in matched_form_ids:
+                            return int(m.group(1)), entry["form"]
+                return None, None
+
             # --- Regional form lookup logic ---
             # Load formsen.json and poke_lookup (api.json) from bot or disk
             with open("data/forms/formsen.json", encoding="utf-8") as f:
                 formsen = json.load(f)
             poke_lookup = bot.poke_lookup  # or load from api.json if not already loaded
 
-            # Find all form keys containing the form_query (case-insensitive, fuzzy)
-            form_query_lower = form_query.lower()
-            regional_forms = [(k, v) for k, v in formsen.items() if form_query_lower in v.lower()]
-            regional_form_ids = [int(k.split("_")[1]) for k, v in regional_forms]
-
-            # Cross-reference with poke_lookup
-            form_id = None
-            form_name = None
-            for entry in poke_lookup:
-                if f"({mon_id})" in entry["pokedex"]:
-                    m = re.search(r"\((\d+)\)", entry["form"])
-                    if m and int(m.group(1)) in regional_form_ids:
-                        form_id = int(m.group(1))
-                        form_name = entry["form"]
-                        break
+            form_id, form_name = find_form_id_for_mon(mon_id, form_query, formsen, poke_lookup)
 
             if not form_id:
                 await ctx.send(f"Could not find form '{form_query}' for {mon['name']}")
