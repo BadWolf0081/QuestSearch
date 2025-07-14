@@ -22,75 +22,81 @@ async def setup(bot):
                 await ctx.send(f"Unknown area: {areaname}")
                 return
 
-            mon = bot.fuzzy_find_pokemon(pokemon_name)
-            print(f"[QFORM DEBUG] Fuzzy pokemon: {mon}")
-            if not mon:
-                await ctx.send(f"Could not find Pokémon: {pokemon_name}")
-                return
-
-            mon_id = int(mon['pokedex'].split('(')[-1].replace(')', '').strip())
-
-            def find_form_id_for_mon(mon_id, form_query, formsen, poke_lookup):
-                # 1. Fuzzy match form_query to formsen values (case-insensitive, partial match)
-                form_names = [v.lower() for k, v in formsen.items() if k.startswith("form_")]
-                matches = difflib.get_close_matches(form_query.lower(), form_names, n=5, cutoff=0.6)
-                if not matches:
-                    # Try substring match as fallback
-                    matches = [v for k, v in formsen.items() if k.startswith("form_") and form_query.lower() in v.lower()]
-                if not matches:
-                    return None, None
-
-                # 2. Collect all form IDs that match
-                matched_form_ids = []
-                for k, v in formsen.items():
-                    if k.startswith("form_") and v.lower() in matches:
-                        try:
-                            matched_form_ids.append(int(k.split("_")[1]))
-                        except Exception:
-                            continue
-
-                # 3. For each matching form ID, check if it exists for this Pokémon in poke_lookup
-                for entry in poke_lookup:
-                    if f"({mon_id})" in entry["pokedex"]:
-                        m = re.search(r"\((\d+)\)", entry["form"])
-                        if m and int(m.group(1)) in matched_form_ids:
-                            return int(m.group(1)), entry["form"]
-                return None, None
-
-            # --- Regional form lookup logic ---
-            # Load formsen.json and poke_lookup (api.json) from bot or disk
+            # --- Load formsen.json for form name/id mapping ---
             with open("data/forms/formsen.json", encoding="utf-8") as f:
                 formsen = json.load(f)
-            poke_lookup = bot.poke_lookup  # or load from api.json if not already loaded
-
             # --- Load index.json for icon existence check ---
             with open("data/forms/index.json", encoding="utf-8") as f:
                 icon_index = json.load(f)
 
-            form_id, form_name = find_form_id_for_mon(mon_id, form_query, formsen, poke_lookup)
+            # --- Find pokedex number for the pokemon ---
+            # Use bot.forms (loaded from forms/en.json etc) for name->dex lookup
+            # Try to match pokemon_name to a pokedex number
+            def get_pokedex_id_from_name(name, forms_dict):
+                # Try exact match
+                for dex, forms in forms_dict.items():
+                    for form_id, form_name in forms.items():
+                        if form_name.lower() == name.lower():
+                            return int(dex)
+                # Fuzzy match
+                all_names = []
+                for dex, forms in forms_dict.items():
+                    for form_id, form_name in forms.items():
+                        all_names.append((form_name, dex))
+                matches = difflib.get_close_matches(name.lower(), [n[0].lower() for n in all_names], n=1, cutoff=0.7)
+                if matches:
+                    for form_name, dex in all_names:
+                        if form_name.lower() == matches[0]:
+                            return int(dex)
+                return None
 
-            # Check if the icon file exists in index.json (valid form for this Pokémon)
-            valid_form = False
-            if form_id is not None:
-                icon_filename = f"{mon_id}_f{form_id}.png"
-                # icon_index is a dict of lists, search all lists for the filename
-                for file_list in icon_index.values():
-                    if icon_filename in file_list:
-                        valid_form = True
-                        break
-
-            if not form_id or not valid_form:
-                await ctx.send(f"Could not find form '{form_query}' for {mon['name']}")
+            # Try to get pokedex number from bot.forms (language file)
+            pokedex_id = get_pokedex_id_from_name(pokemon_name, bot.forms)
+            if pokedex_id is None:
+                await ctx.send(f"Could not find Pokémon: {pokemon_name}")
                 return
 
-            print(f"[QFORM] Area: {area[1]}, Pokémon: {mon['name']}, Form: {form_name} (id={form_id})")
+            # --- Find form id for the given form_query and pokedex_id ---
+            def get_form_id_for_query(pokedex_id, form_query, forms_dict):
+                forms_for_mon = forms_dict.get(str(pokedex_id), {})
+                # Try exact match
+                for form_id, form_name in forms_for_mon.items():
+                    if form_name.lower() == form_query.lower():
+                        return int(form_id), form_name
+                # Fuzzy match
+                matches = difflib.get_close_matches(form_query.lower(), [v.lower() for v in forms_for_mon.values()], n=1, cutoff=0.7)
+                if matches:
+                    for form_id, form_name in forms_for_mon.items():
+                        if form_name.lower() == matches[0]:
+                            return int(form_id), form_name
+                return None, None
+
+            form_id, form_name = get_form_id_for_query(pokedex_id, form_query, bot.forms)
+            if form_id is None:
+                await ctx.send(f"Could not find form '{form_query}' for {pokemon_name}")
+                return
+
+            # --- Check if the icon file exists in index.json (valid form for this Pokémon) ---
+            icon_filename = f"{pokedex_id}_f{form_id}.png"
+            valid_form = False
+            # icon_index is a dict of lists, search all lists for the filename
+            for file_list in icon_index.values():
+                if icon_filename in file_list:
+                    valid_form = True
+                    break
+
+            if not valid_form:
+                await ctx.send(f"Form '{form_query}' is not valid for {pokemon_name}")
+                return
+
+            print(f"[QFORM] Area: {area[1]}, Pokémon: {pokemon_name}, Form: {form_name} (id={form_id})")
 
             # Query for quests with this Pokémon and form
-            quests = await bot.get_data(area, mon_id)
+            quests = await bot.get_data(area, pokedex_id)
             found = False
             entries = []
-            filecode = bot.get_api_filecode(mon_id, form_id=form_id)
-            icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png" if filecode else ""
+            filecode = f"{pokedex_id}_f{form_id}"
+            icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
 
             for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
                 quest_list = json.loads(quest_json)
@@ -110,16 +116,16 @@ async def setup(bot):
                     entries.append(f"[{stop_name_short}]({map_url})")
             if found:
                 embed = discord.Embed(
-                    title=f"{mon['name']} ({form_name}) Quests - {area[1]}",
+                    title=f"{pokemon_name.title()} ({form_name}) Quests - {area[1]}",
                     description="\n".join(entries) if entries else "No quests found.",
                     color=discord.Color.blue()
                 )
                 if icon_url:
                     embed.set_thumbnail(url=icon_url)
                 await ctx.send(embed=embed)
-                print(f"[QFORM] Sent {len(entries)} results for {mon['name']} ({form_name})")
+                print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name})")
             else:
-                await ctx.send(f"No quests found for {mon['name']} ({form_name}) in {area[1]}")
+                await ctx.send(f"No quests found for {pokemon_name} ({form_name}) in {area[1]}")
         except Exception as e:
             print(f"[QFORM ERROR] {e}")
             await ctx.send("Error processing your request.")
