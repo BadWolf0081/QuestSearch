@@ -5,9 +5,6 @@ import aiomysql
 import requests
 from PIL import Image
 from io import BytesIO
-import difflib
-import re
-
 from datetime import datetime, date
 import matplotlib.pyplot as plt
 import pyshorteners
@@ -99,33 +96,6 @@ for row in rows:
             "mega": mega,
             "filecode": filecode
         })
-
-def fuzzy_find_pokemon(query):
-    names = [p["name"] for p in poke_lookup]
-    match = difflib.get_close_matches(query, names, n=1, cutoff=0.6)
-    if match:
-        for p in poke_lookup:
-            if p["name"] == match[0]:
-                return p
-    return None
-
-def fuzzy_find_variant(pokemon, query, variant_type):
-    # variant_type: "form" or "costume" or "filecode"
-    variants = []
-    for p in poke_lookup:
-        if p["name"] == pokemon["name"]:
-            if variant_type == "form" and p["form"]:
-                variants.append(p["form"])
-            elif variant_type == "costume" and p["costume"]:
-                variants.append(p["costume"])
-            elif variant_type == "filecode" and p["filecode"]:
-                variants.append(p["filecode"])
-    match = difflib.get_close_matches(query, variants, n=1, cutoff=0.6)
-    if match:
-        for p in poke_lookup:
-            if p["name"] == pokemon["name"] and (p[variant_type] == match[0]):
-                return p
-    return None
 
 def isUser(role_ids, channel_id):
     if len(bot.config["cmd_roles"][0]) + len(bot.config["cmd_channels"][0]) == 0:
@@ -742,8 +712,12 @@ async def quest(ctx, areaname="", *, args=""):
                         text = text + entry
                         length = length + len(entry)
     embed.description = text
-    image = "https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png"
     if length > 0:
+        placeholder_img = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif"
+        embed.set_image(url=placeholder_img)
+        embed.set_footer(text=footer_text)
+        message = await ctx.send(embed=embed)
+
         if bot.config['use_static']:
             if bot.config['static_provider'] == "mapbox":
                 guild = await bot.fetch_guild(bot.config['host_server'])
@@ -774,13 +748,15 @@ async def quest(ctx, areaname="", *, args=""):
 
             elif bot.config['static_provider'] == "tileserver":
                 image = await bot.static_map.quest(lat_list, lon_list, reward_items, reward_mons, bot.custom_emotes)
+
+        # Replace the placeholder with the real image
+        embed.set_image(url=image)
+        await message.edit(embed=embed)
     else:
         embed.description = bot.locale["no_quests_found"]
-
-    embed.set_footer(text=footer_text)
-    embed.set_image(url=image)
-
-    await message.edit(embed=embed)
+        embed.set_footer(text=footer_text)
+        embed.set_image(url="https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png")
+        await ctx.send(embed=embed)
     
 @bot.command(pass_context=True)
 async def costume(ctx, *, args):
@@ -819,16 +795,16 @@ async def costume(ctx, *, args):
         # Try full costume string (e.g. pikachu_libre)
         if costume_query:
             full_costume = f"{mon_name}_{costume_query.replace(' ', '_')}"
-            costume_id, costume_name = lookup_costume_id_for_mon(mon.id, full_costume)
+            costume_id, costume_name = lookup_costume_id_for_mon(mon.id, full_costume, poke_lookup)
             if costume_id == 0 or costume_id is None:
                 # Try just the costume part (e.g. libre)
-                costume_id, costume_name = lookup_costume_id_for_mon(mon.id, costume_query)
+                costume_id, costume_name = lookup_costume_id_for_mon(mon.id, costume_query, poke_lookup)
             if costume_id == 0 or costume_id is None:
                 costume_id, costume_name = 0, None
         else:
             costume_id, costume_name = 0, None
 
-        filecode = get_api_filecode(mon.id, costume_id=costume_id, shiny=shiny)
+        filecode = get_api_filecode(mon.id, poke_lookup, costume_id=costume_id, shiny=shiny)
         if not filecode:
             await ctx.send("Could not find that Pokémon or costume (API crossref failed).")
             return
@@ -855,20 +831,6 @@ async def costume(ctx, *, args):
         print(f"[COSTUME ERROR] {e}")
         await ctx.send("Could not find that Pokémon or costume.")
 
-def lookup_costume_id_for_mon(mon_id, costume_query):
-    """Find the correct costume_id for a given Pokémon ID and costume name (case-insensitive, fuzzy)."""
-    candidates = [entry for entry in poke_lookup if f"({mon_id})" in entry["pokedex"]]
-    costume_names = [entry["costume"] for entry in candidates if entry["costume"]]
-    match = difflib.get_close_matches(costume_query.lower(), [c.lower() for c in costume_names], n=1, cutoff=0.6)
-    if match:
-        for entry in candidates:
-            if entry["costume"].lower() == match[0]:
-                # Extract the costume_id from the string, e.g. "LIBRE (78)"
-                m = re.search(r"\((\d+)\)", entry["costume"])
-                if m:
-                    return int(m.group(1)), entry["costume"]
-    return 0, None  # fallback to default costume
-
 @bot.command(pass_context=True)
 async def form(ctx, *, args):
     try:
@@ -886,12 +848,12 @@ async def form(ctx, *, args):
         form_id = 0
         if form_query:
             full_form = f"{mon_name}_{form_query.replace(' ', '_')}"
-            form_id, _ = lookup_form_id_for_mon(mon.id, full_form)
+            form_id, _ = lookup_form_id_for_mon(mon.id, full_form, poke_lookup)
             if form_id == 0 or form_id is None:
-                form_id, _ = lookup_form_id_for_mon(mon.id, form_query)
+                form_id, _ = lookup_form_id_for_mon(mon.id, form_query, poke_lookup)
         mega_id = 1 if mega else None
 
-        filecode = get_api_filecode(mon.id, form_id=form_id, shiny=shiny, mega_id=mega_id)
+        filecode = get_api_filecode(mon.id, poke_lookup, form_id=form_id, shiny=shiny, mega_id=mega_id)
         if not filecode:
             await ctx.send("Could not find that Pokémon or form (API crossref failed).")
             return
@@ -1000,7 +962,33 @@ async def on_ready():
 with open ("data/forms/formsen.json", encoding="utf-8") as f:
     forms_data = json.load(f)
 
-def fuzzy_lookup_form_id(query):
+def fuzzy_find_pokemon(query, poke_lookup):
+    """Fuzzy find a Pokémon by name."""
+    from difflib import get_close_matches
+    query = query.lower()
+    names = [p["name"].lower() for p in poke_lookup]
+    matches = get_close_matches(query, names, n=5, cutoff=0.6)
+    if matches:
+        return [p for p in poke_lookup if p["name"].lower() in matches]
+    return []
+
+def fuzzy_find_variant(pokemon, query, variant_type, poke_lookup):
+    """Fuzzy find a variant (form/costume) for a given Pokémon."""
+    from difflib import get_close_matches
+    query = query.lower()
+    if variant_type == "form":
+        variants = [f["form"] for f in poke_lookup if f["name"].lower() == pokemon.lower()]
+    elif variant_type == "costume":
+        variants = [c["costume"] for c in poke_lookup if c["name"].lower() == pokemon.lower()]
+    else:
+        return None
+
+    matches = get_close_matches(query, variants, n=1, cutoff=0.6)
+    if matches:
+        return matches[0]
+    return None
+
+def fuzzy_lookup_form_id(query, forms_data):
     # Find best match for form name, return (form_id, form_name)
     form_keys = [k for k in forms_data if k.startswith("form_")]
     form_names = [forms_data[k].lower() for k in form_keys]
@@ -1011,7 +999,7 @@ def fuzzy_lookup_form_id(query):
                 return int(k.split("_")[1]), forms_data[k]
     return None, None
 
-def fuzzy_lookup_costume_id(query):
+def fuzzy_lookup_costume_id(query, forms_data):
     # Find best match for costume name, return (costume_id, costume_name)
     costume_keys = [k for k in forms_data if k.startswith("costume_")]
     costume_names = [forms_data[k].lower() for k in costume_keys]
@@ -1022,7 +1010,7 @@ def fuzzy_lookup_costume_id(query):
                 return int(k.split("_")[1]), forms_data[k]
     return None, None
 
-def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False, mega_id=None):
+def get_api_filecode(pokedex_id, poke_lookup, form_id=None, costume_id=None, shiny=False, mega_id=None):
     print(f"[API FILECODE] Looking up: pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}, mega_id={mega_id}")
     candidates = []
     for entry in poke_lookup:
@@ -1050,7 +1038,7 @@ def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False, meg
     print(f"[API FILECODE] No candidates found for pokedex_id={pokedex_id}, form_id={form_id}, costume_id={costume_id}, shiny={shiny}, mega_id={mega_id}")
     return None
 
-def lookup_form_id_for_mon(mon_id, form_query):
+def lookup_form_id_for_mon(mon_id, form_query, poke_lookup):
     """Find the correct form_id for a given Pokémon ID and form name (case-insensitive, fuzzy)."""
     candidates = [entry for entry in poke_lookup if f"({mon_id})" in entry["pokedex"]]
     form_map = {}
@@ -1079,17 +1067,3 @@ def lookup_form_id_for_mon(mon_id, form_query):
     return None
 bot.poke_lookup = poke_lookup
 bot.get_area = get_area
-bot.fuzzy_find_pokemon = fuzzy_find_pokemon
-bot.lookup_form_id_for_mon = lookup_form_id_for_mon
-bot.get_data = get_data
-bot.get_api_filecode = get_api_filecode
-async def main():
-    for extension in extensions:
-        await bot.load_extension(extension)
-    await bot.start(bot.config['bot_token'])
-
-if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except (KeyboardInterrupt, asyncio.CancelledError):
-        print("Bot shutdown requested. Exiting cleanly.")
