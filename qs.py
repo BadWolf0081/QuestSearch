@@ -1329,15 +1329,33 @@ def get_api_filecode(pokedex_id, form_id=None, costume_id=None, shiny=False, meg
 def lookup_form_id_for_mon(mon_id, form_query):
     """Find the correct form_id for a given Pokémon ID and form name (case-insensitive, fuzzy)."""
     candidates = [entry for entry in poke_lookup if f"({mon_id})" in entry["pokedex"]]
-    form_names = [entry["form"] for entry in candidates if entry["form"]]
-    match = difflib.get_close_matches(form_query.lower(), [f.lower() for f in form_names], n=1, cutoff=0.6)
+    form_map = {}
+    for entry in candidates:
+        form_field = entry["form"]
+        if form_field:
+            # Remove the (id) part and normalize
+            form_base = form_field.split(" (")[0].strip().lower()
+            form_map[form_base] = entry
+            # Also allow just the form part after the underscore
+            if "_" in form_base:
+                _, form_only = form_base.split("_", 1)
+                form_map[form_only] = entry
+    # Normalize user query
+    form_query_norm = form_query.strip().lower().replace(" ", "_")
+    # Try exact match first
+    if form_query_norm in form_map:
+        entry = form_map[form_query_norm]
+        m = re.search(r"\((\d+)\)", entry["form"])
+        if m:
+            return int(m.group(1)), entry["form"]
+    # Fuzzy match fallback
+    import difflib
+    match = difflib.get_close_matches(form_query_norm, form_map.keys(), n=1, cutoff=0.7)
     if match:
-        for entry in candidates:
-            if entry["form"].lower() == match[0]:
-                # Extract the form_id from the string, e.g. "MEOWTH_GALARIAN (2335)"
-                m = re.search(r"\((\d+)\)", entry["form"])
-                if m:
-                    return int(m.group(1)), entry["form"]
+        entry = form_map[match[0]]
+        m = re.search(r"\((\d+)\)", entry["form"])
+        if m:
+            return int(m.group(1)), entry["form"]
     return 0, None  # fallback to default form
 
 def parse_mon_args(parts):
