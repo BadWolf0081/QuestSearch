@@ -112,7 +112,6 @@ async def setup(bot):
 
                 if str(pokedex_id) in forms_lang and not use_no_form:
                     logging.debug(f"[QFORM] forms_lang[{pokedex_id}]: {forms_lang[str(pokedex_id)]}")
-                    # Always search values for the form name (case-insensitive, strip whitespace)
                     for fid, fname in forms_lang[str(pokedex_id)].items():
                         logging.debug(f"[QFORM] Checking form: fid={fid}, fname='{fname}' vs '{form_query_clean}'")
                         if fname.strip().lower() == form_query_clean:
@@ -120,14 +119,14 @@ async def setup(bot):
                             form_name = fname
                             logging.info(f"[QFORM] Exact match found: fid={fid}, fname='{fname}'")
                             break
-                    # Fuzzy match if not exact
+                    # Fuzzy/partial match if not exact
                     if not form_id_for_mon and form_query:
-                        all_names = [fname.lower() for fname in forms_lang[str(pokedex_id)].values()]
+                        all_names = [fname.strip().lower() for fname in forms_lang[str(pokedex_id)].values()]
                         close = difflib.get_close_matches(form_query_clean, all_names, n=1, cutoff=0.7)
                         logging.debug(f"[QFORM] Fuzzy matches for '{form_query_clean}': {close}")
                         if close:
                             for fid, fname in forms_lang[str(pokedex_id)].items():
-                                if fname.lower() == close[0]:
+                                if fname.strip().lower() == close[0]:
                                     form_id_for_mon = fid
                                     form_name = fname
                                     logging.info(f"[QFORM] Fuzzy match found: fid={fid}, fname='{fname}'")
