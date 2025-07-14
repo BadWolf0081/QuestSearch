@@ -18,6 +18,12 @@ from util.db import (
     get_datamega, get_alt_datamega, get_dataroute, get_datastar, get_alt_datastar,
     get_datak, get_datashow, get_datacoin
 )
+from util.pokemon_lookup import (
+    lookup_form_id_for_mon,
+    lookup_costume_id_for_mon,
+    fuzzy_find_pokemon,
+    get_api_filecode,
+)
 
 extensions = ["qform"]
 
@@ -962,46 +968,8 @@ async def on_ready():
 with open ("data/forms/formsen.json", encoding="utf-8") as f:
     forms_data = json.load(f)
 
-def lookup_form_id_for_mon(mon_id, form_query, poke_lookup):
-    """Find the correct form_id for a given Pokémon ID and form name (case-insensitive, fuzzy)."""
-    candidates = [entry for entry in poke_lookup if f"({mon_id})" in entry["pokedex"]]
-    form_map = {}
-    for entry in candidates:
-        form_field = entry["form"]
-        if form_field:
-            form_base = form_field.split(" (")[0].strip().lower()
-            form_map[form_base] = entry
-            if "_" in form_base:
-                _, form_only = form_base.split("_", 1)
-                form_map[form_only] = entry
-    print(f"[LOOKUP DEBUG] Candidates for mon_id={mon_id}: {list(form_map.keys())}")
-    form_query_clean = form_query.strip().lower() if form_query else ""
-    if form_query_clean in form_map:
-        entry = form_map[form_query_clean]
-        m = re.search(r"\((\d+)\)", entry["form"])
-        if m:
-            return int(m.group(1)), entry["form"]
-    import difflib
-    match = difflib.get_close_matches(form_query_clean, form_map.keys(), n=1, cutoff=0.7)
-    if match:
-        entry = form_map[match[0]]
-        m = re.search(r"\((\d+)\)", entry["form"])
-        if m:
-            return int(m.group(1)), entry["form"]
-    return None
-
-def lookup_costume_id_for_mon(mon_id, costume_query, poke_lookup):
-    """Find the correct costume_id for a given Pokémon ID and costume name (case-insensitive, fuzzy)."""
-    candidates = [entry for entry in poke_lookup if f"({mon_id})" in entry["pokedex"]]
-    costume_names = [entry["costume"] for entry in candidates if entry["costume"]]
-    match = difflib.get_close_matches(costume_query.lower(), [c.lower() for c in costume_names], n=1, cutoff=0.6)
-    if match:
-        for entry in candidates:
-            if entry["costume"].lower() == match[0]:
-                m = re.search(r"\((\d+)\)", entry["costume"])
-                if m:
-                    return int(m.group(1)), entry["costume"]
-    return 0, None  # fallback to default costume
-
 bot.poke_lookup = poke_lookup
-bot.get_area = get_area
+bot.lookup_form_id_for_mon = lambda mon_id, form_query: lookup_form_id_for_mon(mon_id, form_query, poke_lookup)
+bot.lookup_costume_id_for_mon = lambda mon_id, costume_query: lookup_costume_id_for_mon(mon_id, costume_query, poke_lookup)
+bot.fuzzy_find_pokemon = lambda query: fuzzy_find_pokemon(query, poke_lookup)
+bot.get_api_filecode = lambda *args, **kwargs: get_api_filecode(*args, poke_lookup=bot.poke_lookup, **kwargs)
