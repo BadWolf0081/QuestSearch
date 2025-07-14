@@ -1,11 +1,8 @@
 import discord
 import json
-import difflib
-import re
 from discord.ext import commands
 
-def setup(bot):
-    @bot.command(pass_context=True)
+async def setup(bot):
     async def qform(ctx, areaname="", pokemon_name="", form_query=""):
         """
         Usage: !qform <area> <pokemon name> <form>
@@ -64,3 +61,5 @@ def setup(bot):
         except Exception as e:
             print(f"[QFORM ERROR] {e}")
             await ctx.send("Error processing your request.")
+
+    bot.add_command(commands.Command(qform, name="qform"))
