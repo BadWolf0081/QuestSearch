@@ -257,58 +257,58 @@ async def quest(ctx, areaname="", *, args=""):
         if reward.startswith("Mega") or reward.startswith("mega"):
             embed.title = f"{mon.name} {bot.locale['mega']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png")
-            quests = await get_datamega(area)
-            quests2 = await get_alt_datamega(area)
+            quests = await get_datamega(bot.config, area)
+            quests2 = await get_alt_datamega(bot.config, area)
         elif reward.startswith("Showcase") or reward.startswith("showcase"):
             embed.title = f"{mon.name} {bot.locale['showcase']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/showcase.png")
-            quests = await get_datashow(area)
+            quests = await get_datashow(bot.config, area)
         elif reward.startswith("station") or reward.startswith("Power") or reward.startswith("Station") or reward.startswith("power"):
             embed.title = f"{bot.locale['station']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/showcase.png")
-            quests = await get_stations(area)
+            quests = await get_stations(bot.config, area)
         elif reward.startswith("Lure") or reward.startswith("lure"):
             embed.title = f"{bot.locale['active_lures']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokestop/501.png")
-            quests = await get_lures(area)
+            quests = await get_lures(bot.config, area)
         elif reward.startswith("Route") or reward.startswith("route"):
             embed.title = f"{bot.locale['routes']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/route-start.png")
-            quests = await get_dataroute(area)
+            quests = await get_dataroute(bot.config, area)
         elif reward.startswith("Giovan") or reward.startswith("giovan"):
             embed.title = f"{bot.locale['giovani']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/44.png")
-            quests = await get_datagiovani(area)
+            quests = await get_datagiovani(bot.config, area)
         elif reward.startswith("Sierra") or reward.startswith("sierra"):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/43.png")
-            quests = await get_dataleaders(area, 43)
+            quests = await get_dataleaders(bot.config, area, 43)
         elif reward.startswith("Arlo") or reward.startswith("arlo"):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/42.png")
-            quests = await get_dataleaders(area, 42)
+            quests = await get_dataleaders(bot.config, area, 42)
         elif reward.startswith("Cliff") or reward.startswith("cliff"):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/41.png")
-            quests = await get_dataleaders(area, 41)
+            quests = await get_dataleaders(bot.config, area, 41)
         elif mon.name == "Kecleon":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png")
-            quests = await get_datak(area)
+            quests = await get_datak(bot.config, area)
         elif mon.name == "Coins":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/event_coin.png")
-            quests = await get_datacoin(area)
+            quests = await get_datacoin(bot.config, area)
         elif mon.name == "Stardust":
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/stardust/0.png")
-            quests = await get_datastar(area)
-            quests2 = await get_alt_datastar(area)
+            quests = await get_datastar(bot.config, area)
+            quests2 = await get_alt_datastar(bot.config, area)
         else:
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png")
             quests = await get_data(bot.config, area, mon.id)
-            quests2 = await get_alt_data(area, mon.id)
+            quests2 = await get_alt_data(bot.config, area, mon.id)
         mons.append(mon.id)
     
     length = 0
