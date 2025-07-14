@@ -73,8 +73,11 @@ async def setup(bot):
             valid_form = False
             if form_id is not None:
                 icon_filename = f"{mon_id}_f{form_id}.png"
-                if icon_filename in icon_index:
-                    valid_form = True
+                # icon_index is a dict of lists, search all lists for the filename
+                for file_list in icon_index.values():
+                    if icon_filename in file_list:
+                        valid_form = True
+                        break
 
             if not form_id or not valid_form:
                 await ctx.send(f"Could not find form '{form_query}' for {mon['name']}")
