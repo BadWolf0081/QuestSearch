@@ -56,17 +56,18 @@ async def setup(bot):
                 await ctx.send(f"Could not find any form matching '{form_query}'")
                 return
 
-            # --- 2. Fuzzy Pokémon name lookup ---
-            def get_pokedex_id_from_name(name, names_dict):
-                for mon_name, dex in names_dict.items():
-                    if mon_name.lower() == name.lower():
-                        return int(dex)
-                matches = difflib.get_close_matches(name.lower(), [n.lower() for n in names_dict.keys()], n=1, cutoff=0.7)
-                if matches:
-                    return int(names_dict[matches[0]])
+            # --- 2. Fuzzy Pokémon name lookup using poke_lookup from qs.py ---
+            def get_pokedex_id_from_name(name):
+                # Use the same logic as qs.py
+                names = [p["name"] for p in bot.poke_lookup]
+                match = difflib.get_close_matches(name, names, n=1, cutoff=0.6)
+                if match:
+                    for p in bot.poke_lookup:
+                        if p["name"] == match[0]:
+                            return int(p["pokedex"].replace("(", "").replace(")", ""))
                 return None
 
-            pokedex_id = get_pokedex_id_from_name(pokemon_name, mon_names)
+            pokedex_id = get_pokedex_id_from_name(pokemon_name)
             if pokedex_id is None:
                 await ctx.send(f"Could not find Pokémon: {pokemon_name}")
                 return
