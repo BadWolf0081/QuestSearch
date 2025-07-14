@@ -126,6 +126,24 @@ async def setup(bot):
                 )
                 if icon_url:
                     embed.set_thumbnail(url=icon_url)
+
+                # --- Add static map if enabled ---
+                if getattr(bot, "static_map", None) is not None and entries:
+                    # Collect all lat/lon for the found quests
+                    quest_coords = [(lat, lon) for _, _, lat, lon, _, _ in quests if int(json.loads(_)[0]["info"].get("form_id", 0)) == int(found_form_id)]
+                    # Prepare mons list for static_map.quest: (mon_id, lat, lon)
+                    mons = [(pokedex_id, lat, lon) for lat, lon in quest_coords]
+                    # items param is not used for mon icons, so pass 0
+                    static_map_url = await bot.static_map.quest(
+                        [lat for _, lat, _ in mons],
+                        [lon for _, _, lon in mons],
+                        0,
+                        mons,
+                        bot.custom_emotes
+                    )
+                    if static_map_url:
+                        embed.set_image(url=static_map_url)
+
                 await ctx.send(embed=embed)
                 print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name})")
             else:
