@@ -126,17 +126,21 @@ async def setup(bot):
                     form_name = "No Form"
                     found_form_id = 0  # For clarity, but not used for matching
                 elif use_normal:
-                    # User specified "normal": find the correct form_id for "Normal"
                     normal_form_id = None
+                    # Try to find a form named "Normal"
                     if str(pokedex_id) in forms_lang:
                         for fid, fname in forms_lang[str(pokedex_id)].items():
                             if fname.strip().lower() == "normal":
                                 normal_form_id = fid
                                 break
+                    # If not found, use the lowest form ID (default form)
+                    if normal_form_id is None and str(pokedex_id) in forms_lang:
+                        normal_form_id = sorted(forms_lang[str(pokedex_id)].keys(), key=lambda x: int(x))[0]
+                    # If still not found, fallback to 0
                     if normal_form_id is None:
-                        await ctx.send(f"No form named 'Normal' found for {pokemon_name}")
-                        return
-                    icon_filename = f"{pokedex_id}_f{normal_form_id}.png"
+                        normal_form_id = 0
+
+                    icon_filename = f"{pokedex_id}_f{normal_form_id}.png" if int(normal_form_id) != 0 else f"{pokedex_id}.png"
                     if not search_icon_index(icon_index, icon_filename):
                         await ctx.send(f"No valid icon found for {pokemon_name} (Normal form)")
                         return
@@ -192,17 +196,21 @@ async def setup(bot):
                     form_name = "No Form"
                     found_form_id = 0  # For clarity, but not used for matching
                 elif use_normal:
-                    # User specified "normal": find the correct form_id for "Normal"
                     normal_form_id = None
+                    # Try to find a form named "Normal"
                     if str(pokedex_id) in forms_lang:
                         for fid, fname in forms_lang[str(pokedex_id)].items():
                             if fname.strip().lower() == "normal":
                                 normal_form_id = fid
                                 break
+                    # If not found, use the lowest form ID (default form)
+                    if normal_form_id is None and str(pokedex_id) in forms_lang:
+                        normal_form_id = sorted(forms_lang[str(pokedex_id)].keys(), key=lambda x: int(x))[0]
+                    # If still not found, fallback to 0
                     if normal_form_id is None:
-                        await ctx.send(f"No form named 'Normal' found for {pokemon_name}")
-                        return
-                    icon_filename = f"{pokedex_id}_f{normal_form_id}.png"
+                        normal_form_id = 0
+
+                    icon_filename = f"{pokedex_id}_f{normal_form_id}.png" if int(normal_form_id) != 0 else f"{pokedex_id}.png"
                     if not search_icon_index(icon_index, icon_filename):
                         await ctx.send(f"No valid icon found for {pokemon_name} (Normal form)")
                         return
