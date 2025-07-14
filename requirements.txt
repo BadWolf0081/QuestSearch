@@ -8,7 +8,7 @@ cryptography
 cycler
 dateparser
 discord
-discord.py
+discord.py>=2.0.0
 idna
 kiwisolver
 matplotlib
@@ -25,3 +25,5 @@ six
 tzlocal
 websockets
 yarl
+requests
+Pillow
