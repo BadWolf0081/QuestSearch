@@ -77,6 +77,7 @@ async def setup(bot):
             else:
                 # Use form logic as before
                 form_ids = get_form_ids_by_name(form_query, formsen)
+                print(f"[QFORM DEBUG] form_ids found for '{form_query}': {form_ids}")
                 if not form_ids:
                     # Try costume match if no form match
                     costume_ids = []
@@ -111,11 +112,19 @@ async def setup(bot):
                     costume_id_for_match = None
                     found_form_id = form_ids[0]
                     icon_filename = f"{pokedex_id}_f{found_form_id}.png"
+                    print(f"[QFORM DEBUG] Checking icon_filename: {icon_filename}")
                     if not search_icon_index(icon_index, icon_filename):
-                        await ctx.send(f"No valid icon found for {pokemon_name} with form '{form_query}'")
-                        return
-                    form_name = formsen.get(f"form_{found_form_id}", form_query.title())
-                    icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{pokedex_id}_f{found_form_id}.png"
+                        # Try fallback: check for just {pokedex_id}.png (some forms use base icon)
+                        fallback_icon_filename = f"{pokedex_id}.png"
+                        print(f"[QFORM DEBUG] Fallback to icon_filename: {fallback_icon_filename}")
+                        if search_icon_index(icon_index, fallback_icon_filename):
+                            icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{fallback_icon_filename}"
+                        else:
+                            await ctx.send(f"No valid icon found for {pokemon_name} with form '{form_query}'")
+                            return
+                    else:
+                        form_name = formsen.get(f"form_{found_form_id}", form_query.title())
+                        icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
 
             print(f"[QFORM] Area: {area[1]}, Pokémon: {pokemon_name}, Form: {form_name} (id={found_form_id})")
 
