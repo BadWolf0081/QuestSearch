@@ -146,6 +146,62 @@ async def setup(bot):
                 )
                 if icon_url:
                     embed.set_thumbnail(url=icon_url)
+
+                # --- Static map logic (like !q) ---
+                static_map_url = None
+                if getattr(bot, "static_map", None) is not None and entries:
+                    # Gather all coordinates for the found quests
+                    lat_list = []
+                    lon_list = []
+                    mons = []
+                    for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
+                        try:
+                            quest_json_str = quest_json.strip()
+                            if quest_json_str.startswith("["):
+                                end_idx = quest_json_str.find("]") + 1
+                                quest_json_str = quest_json_str[:end_idx]
+                            elif quest_json_str.startswith("{"):
+                                end_idx = quest_json_str.find("}") + 1
+                                quest_json_str = quest_json_str[:end_idx]
+                            quest_list = json.loads(quest_json_str)
+                        except Exception:
+                            continue
+                        if not quest_list or not isinstance(quest_list, list):
+                            continue
+                        first = quest_list[0]
+                        if not isinstance(first, dict) or "info" not in first:
+                            continue
+                        quest_info = first["info"]
+                        q_form_id = quest_info.get("form_id", 0)
+                        if use_normal:
+                            if not q_form_id or int(q_form_id) == 0:
+                                lat_list.append(lat)
+                                lon_list.append(lon)
+                                mons.append((pokedex_id, lat, lon))
+                        else:
+                            if int(q_form_id) == int(found_form_id):
+                                lat_list.append(lat)
+                                lon_list.append(lon)
+                                mons.append((pokedex_id, lat, lon))
+
+                    if mons:
+                        # Optionally, send the embed first and then update with the map (like !q)
+                        msg = await ctx.send(embed=embed)
+                        try:
+                            # Add a short delay to ensure Discord processes the message before editing
+                            import asyncio
+                            await asyncio.sleep(1)
+                            static_map_url = await bot.static_map.quest(
+                                lat_list, lon_list, 0, mons, bot.custom_emotes
+                            )
+                            if static_map_url:
+                                embed.set_image(url=static_map_url)
+                                await msg.edit(embed=embed)
+                        except Exception as e:
+                            print(f"[QFORM ERROR] Static map failed: {e}")
+                        print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name}) with map")
+                        return
+                # If not using static map, just send the embed
                 await ctx.send(embed=embed)
                 print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name})")
             else:
