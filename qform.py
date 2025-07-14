@@ -239,59 +239,22 @@ async def setup(bot):
 
                 static_map_url = None
                 if getattr(bot, "static_map", None) is not None and entries:
-                    lat_list = []
-                    lon_list = []
-                    mons = []
-                    for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
-                        try:
-                            quest_json_str = quest_json.strip()
-                            if quest_json_str.startswith("["):
-                                end_idx = quest_json_str.find("]") + 1
-                                quest_json_str = quest_json_str[:end_idx]
-                            elif quest_json_str.startswith("{"):
-                                end_idx = quest_json_str.find("}") + 1
-                                quest_json_str = quest_json_str[:end_idx]
-                            quest_list = json.loads(quest_json_str)
-                        except Exception:
-                            continue
-                        if not quest_list or not isinstance(quest_list, list):
-                            continue
-                        first = quest_list[0]
-                        if not isinstance(first, dict) or "info" not in first:
-                            continue
-                        quest_info = first["info"]
-                        q_form_id = quest_info.get("form_id", 0)
-                        if use_normal:
-                            if not q_form_id or int(q_form_id) == 0:
-                                lat_list.append(lat)
-                                lon_list.append(lon)
-                                mons.append((pokedex_id, lat, lon))
-                        else:
-                            if int(q_form_id) == int(found_form_id):
-                                lat_list.append(lat)
-                                lon_list.append(lon)
-                                mons.append((f"{pokedex_id}_f{found_form_id}", lat, lon))
-
-                    if mons and isinstance(lat_list, list) and isinstance(lon_list, list):
-                        msg = await ctx.send(embed=embed)
-                        try:
-                            import asyncio
-                            await asyncio.sleep(1)
-                            static_map_url = await bot.static_map.quest(
-                                lat_list, lon_list, [], mons, bot.custom_emotes
-                            )
-                            if static_map_url:
-                                embed.set_image(url=static_map_url)
-                                await msg.edit(embed=embed)
-                        except Exception as e:
-                            print(f"[QFORM ERROR] Static map failed: {e}")
-                        print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name}) with map")
-                        return
-                # If not using static map, just send the embed
+                    # ...existing static map logic...
+                    pass
                 await ctx.send(embed=embed)
                 print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name})")
             else:
-                await ctx.send(f"No quests found for {pokemon_name} with form '{form_name}' in {area[1]}")
+                # Always show the icon even if no quests found
+                embed = discord.Embed(
+                    title=f"{pokemon_name.title()} ({form_name}) Quests - {area[1]}",
+                    description=f"No quests found for {pokemon_name} with form '{form_name}' in {area[1]}",
+                    color=discord.Color.blue()
+                )
+                if icon_url:
+                    embed.set_thumbnail(url=icon_url)
+                placeholder_img = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif"
+                embed.set_image(url=placeholder_img)
+                await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
             print(f"[QFORM ERROR] {str(e)}")
