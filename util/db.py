@@ -79,7 +79,7 @@ async def get_alt_data(area, mon_id):
     await conn.ensure_closed()
     return quests2
 
-async def get_dataitem(area, item_id):
+async def get_dataitem(config, area, item_id):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])
     cur = await conn.cursor()
     async with conn.cursor() as cur:
@@ -137,7 +137,7 @@ async def get_alt_datastar(area):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])    
     cur = await conn.cursor()
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT alternative_quest_reward_amount, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 3 AND alternative_quest_reward_amount >= 999 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY alternative_quest_reward_amount DESC, name;")
+        await cur.execute(f"SELECT alternative_quest_reward_amount, alternative_quest_template, lat, lon, name, id FROM pokestop WHERE alternative_quest_reward_type = 3 AND alternative_quest_reward_amount >= 999 AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_reward_amount DESC, name;")
         quests2 = await cur.fetchall()
     await conn.ensure_closed()
     return quests2
