@@ -9,24 +9,26 @@ async def setup(bot):
         Example: !qform Greatermoncton meowth galarian
         """
         try:
+            print(f"[QFORM DEBUG] area='{areaname}', pokemon_name='{pokemon_name}', form_query='{form_query}'")
             if not areaname or not pokemon_name or not form_query:
                 await ctx.send("Usage: !qform <area> <pokemon name> <form>")
                 return
 
             area = bot.get_area(areaname)
+            print(f"[QFORM DEBUG] Area lookup: {area}")
             if area[1] == bot.locale['unknown']:
                 await ctx.send(f"Unknown area: {areaname}")
                 return
 
-            # Fuzzy match Pokémon
             mon = bot.fuzzy_find_pokemon(pokemon_name)
+            print(f"[QFORM DEBUG] Fuzzy pokemon: {mon}")
             if not mon:
                 await ctx.send(f"Could not find Pokémon: {pokemon_name}")
                 return
 
-            # Fuzzy match form for this Pokémon
+            mon_id = int(mon['pokedex'].split('(')[-1].replace(')', '').strip())
             form_id, form_name = bot.lookup_form_id_for_mon(
-                mon_id=int(mon['pokedex'].split('(')[-1].replace(')', '').strip()),
+                mon_id=mon_id,
                 form_query=form_query
             )
             if not form_name:
@@ -36,7 +38,7 @@ async def setup(bot):
             print(f"[QFORM] Area: {area[1]}, Pokémon: {mon['name']}, Form: {form_name} (id={form_id})")
 
             # Query for quests with this Pokémon and form
-            quests = await bot.get_data(area, int(mon['pokedex'].split('(')[-1].replace(')', '').strip()))
+            quests = await bot.get_data(area, mon_id)
             found = False
             for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
                 quest_info = json.loads(quest_json)[0]["info"]
@@ -44,7 +46,7 @@ async def setup(bot):
                 if int(q_form_id) == int(form_id):
                     found = True
                     filecode = bot.get_api_filecode(
-                        int(mon['pokedex'].split('(')[-1].replace(')', '').strip()),
+                        mon_id,
                         form_id=form_id
                     )
                     icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png" if filecode else ""
