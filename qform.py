@@ -211,9 +211,16 @@ async def setup(bot):
                     continue
                 quest_info = first["info"]
                 q_form_id = quest_info.get("form_id", 0)
+                q_costume_id = quest_info.get("costume_id", 0)  # <-- add this line
+
                 if use_normal:
-                    # Only match if form_id is missing or 0
                     if not q_form_id or int(q_form_id) == 0:
+                        found = True
+                        map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+                        stop_name_short = stop_name[:30]
+                        entries.append(f"[{stop_name_short}]({map_url})")
+                elif use_costume:
+                    if int(q_costume_id) == int(costume_id_for_match):
                         found = True
                         map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
                         stop_name_short = stop_name[:30]
