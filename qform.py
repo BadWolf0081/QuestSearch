@@ -331,7 +331,14 @@ async def setup(bot):
                         fname = forms_lang[str(pokedex_id)].get(str(fid), f"Form {fid}")
                         available_forms.append(fname)
                 if available_forms:
-                    forms_list = "\n".join(f"- {fname}" for fname in available_forms)
+                    # Show both form name and form ID for clarity
+                    forms_list = "\n".join(
+                        f"- {fname} (ID: {fid})"
+                        for fid, fname in [
+                            (fid, forms_lang[str(pokedex_id)].get(str(fid), f"Form {fid}"))
+                            for fid in available_form_ids
+                        ]
+                    )
                     await ctx.send(
                         embed=discord.Embed(
                             title=f"No quests found for {pokemon_name.title()} with form '{form_name}' in {area[1]}",
