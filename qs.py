@@ -205,33 +205,6 @@ async def quest(ctx, areaname="", *, args=""):
 
     print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
 
-    # Use helper for loading embed
-    if area[1] == "Unknown Area":
-        embed = make_loading_embed(bot.locale['no_area_found'], text, loading)
-    elif reward.startswith("Mega") or reward.startswith("mega"):
-        embed = make_loading_embed(bot.locale['mega'], text, loading)
-    elif reward.startswith("Lure") or reward.startswith("lure"):
-        embed = make_loading_embed(bot.locale['active_lures'], text, loading)
-    elif reward.startswith("Station") or reward.startswith("Power") or reward.startswith("station") or reward.startswith("power"):
-        embed = make_loading_embed(bot.locale['station'], text, loading)
-    elif reward.startswith("Showcase") or reward.startswith("showcase"):
-        embed = make_loading_embed(bot.locale['showcase'], text, loading)
-    elif reward.startswith("Giovan") or reward.startswith("giovan"):
-        embed = make_loading_embed(bot.locale['giovani'], text, loading)
-    elif reward.startswith("Leader") or reward.startswith("leader"):
-        embed = make_loading_embed(bot.locale['leaders'], text, loading)
-    elif reward == "Stardust" or reward == "stardust":
-        embed = make_loading_embed(bot.locale['quests'], text, loading)
-    elif reward.startswith("Route") or reward.startswith("route"):
-        embed = make_loading_embed(bot.locale['routes'], text, loading)
-    elif reward.lower() in ["kecleon", "keckleon"]:
-        embed = make_loading_embed(bot.locale['eventstop'], text, loading)
-    elif reward.lower() == "coins":
-        embed = make_loading_embed(bot.locale['eventstop'], text, loading)
-    else:
-        embed = make_loading_embed(bot.locale['quests'], text, loading)
-    message = await ctx.send(embed=embed)
-
     items = list()
     mons = list()
     item_found = False
@@ -890,13 +863,6 @@ async def form(ctx, *, args):
 
 @bot.command(pass_context=True)
 async def custom(ctx, *, args):
-    """
-    Usage: !custom <pokemon name> [custom_id] [shiny]
-    Example: !custom pikachu 001 shiny
-    If no custom_id is given, returns the default icon.
-    Add 'shiny' as the last argument to get the shiny version.
-    This uses the format: pokemon/{dex}_{custom_id}.png (no _f or _c)
-    """
     try:
         parts = args.strip().split()
         if not parts:
