@@ -137,3 +137,5 @@ async def setup(bot):
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
             print(f"[QFORM ERROR] {str(e)}")
+
+    bot.command(name="qform")(qform)  # <-- Add this line to register the command
