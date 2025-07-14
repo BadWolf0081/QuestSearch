@@ -256,7 +256,7 @@ async def setup(bot):
                 await ctx.send(embed=embed)
                 print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name})")
             else:
-                # Always show the icon even if no quests found
+                # Show only the Pokémon icon, no placeholder image, if no quests found
                 embed = discord.Embed(
                     title=f"{pokemon_name.title()} ({form_name}) Quests - {area[1]}",
                     description=f"No quests found for {pokemon_name} with form '{form_name}' in {area[1]}",
@@ -264,8 +264,7 @@ async def setup(bot):
                 )
                 if icon_url:
                     embed.set_thumbnail(url=icon_url)
-                placeholder_img = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif"
-                embed.set_image(url=placeholder_img)
+                # Do NOT set embed.set_image here!
                 await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
