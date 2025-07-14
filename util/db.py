@@ -79,7 +79,7 @@ async def get_alt_data(area, mon_id):
     await conn.ensure_closed()
     return quests2
 
-async def get_dataitem(config, area, item_id):
+async def get_dataitem(area, item_id):
     conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])
     cur = await conn.cursor()
     async with conn.cursor() as cur:
