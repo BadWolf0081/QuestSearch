@@ -147,10 +147,12 @@ async def setup(bot):
                 if icon_url:
                     embed.set_thumbnail(url=icon_url)
 
-                # --- Static map logic (like !q) ---
+                # Set the same placeholder image as !quest
+                placeholder_img = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif"
+                embed.set_image(url=placeholder_img)
+
                 static_map_url = None
                 if getattr(bot, "static_map", None) is not None and entries:
-                    # Gather all coordinates for the found quests
                     lat_list = []
                     lon_list = []
                     mons = []
@@ -177,12 +179,11 @@ async def setup(bot):
                             if not q_form_id or int(q_form_id) == 0:
                                 lat_list.append(lat)
                                 lon_list.append(lon)
-                                mons.append((pokedex_id, lat, lon))  # base icon
+                                mons.append((pokedex_id, lat, lon))
                         else:
                             if int(q_form_id) == int(found_form_id):
                                 lat_list.append(lat)
                                 lon_list.append(lon)
-                                # Use the correct icon filename for forms
                                 mons.append((f"{pokedex_id}_f{found_form_id}", lat, lon))
 
                     if mons and isinstance(lat_list, list) and isinstance(lon_list, list):
@@ -190,11 +191,6 @@ async def setup(bot):
                         try:
                             import asyncio
                             await asyncio.sleep(1)
-                            # Debug output
-                            print(f"[QFORM DEBUG] lat_list: {lat_list} (type: {type(lat_list)})")
-                            print(f"[QFORM DEBUG] lon_list: {lon_list} (type: {type(lon_list)})")
-                            print(f"[QFORM DEBUG] mons: {mons} (type: {type(mons)})")
-                            print(f"[QFORM DEBUG] bot.custom_emotes: {bot.custom_emotes} (type: {type(bot.custom_emotes)})")
                             static_map_url = await bot.static_map.quest(
                                 lat_list, lon_list, [], mons, bot.custom_emotes
                             )
