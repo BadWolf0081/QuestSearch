@@ -1358,6 +1358,25 @@ def lookup_form_id_for_mon(mon_id, form_query):
             return int(m.group(1)), entry["form"]
     return 0, None  # fallback to default form
 
+poke_lookup = []
+for row in rows:
+    cols = re.findall(r"<td>(.*?)</td>", row, re.DOTALL)
+    if len(cols) >= 7:
+        name = re.sub(r"<.*?>", "", cols[0]).strip()
+        pokedex = re.sub(r"<.*?>", "", cols[1]).strip()
+        form = re.sub(r"<.*?>", "", cols[2]).strip()
+        costume = re.sub(r"<.*?>", "", cols[3]).strip()
+        mega = re.sub(r"<.*?>", "", cols[4]).strip()
+        filecode = re.sub(r"<.*?>", "", cols[6]).strip()
+        poke_lookup.append({
+            "name": name,
+            "pokedex": pokedex,
+            "form": form,
+            "costume": costume,
+            "mega": mega,
+            "filecode": filecode
+        })
+
 def parse_mon_args(parts):
     shiny = False
     mega = False
@@ -1390,6 +1409,7 @@ def parse_mon_args(parts):
         mon_name = parts[0]
 
     return mon_name, form_query, shiny, mega
+bot.poke_lookup = poke_lookup
 bot.get_area = get_area
 bot.fuzzy_find_pokemon = fuzzy_find_pokemon
 bot.lookup_form_id_for_mon = lookup_form_id_for_mon
