@@ -104,7 +104,21 @@ class static_map:
                     if mon_id ==99998:
                         data["markers"].append({"url": f"{self.icons}reward/stardust/0.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
                     else:
-                        data["markers"].append({"url": f"{self.icons}pokemon/{str(mon_id)}.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+                        if isinstance(mon_id, str) and "_f" in mon_id:
+                            # Use direct icon URL for form
+                            icon_url = f"{self.icons}pokemon/{mon_id}.png"
+                        else:
+                            # Use emote or base icon
+                            icon_url = f"{self.icons}pokemon/{str(mon_id)}.png"
+                        data["markers"].append({
+                            "url": icon_url,
+                            "height": 32,
+                            "width": 32,
+                            "x_offset": 0,
+                            "y_offset": 0,
+                            "latitude": mon_lat,
+                            "longitude": mon_lon
+                        })
                 for item_id, item_lat, item_lon in items:
                     data["markers"].append({"url": f"{self.icons}reward/item/{item_id}.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": item_lat,"longitude": item_lon})
 
