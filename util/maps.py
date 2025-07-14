@@ -101,8 +101,8 @@ class static_map:
                      data["markers"].append({"url": f"{self.icons}invasion/41.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
             else:
                 for mon_id, mon_lat, mon_lon in mons:
-                    if mon_id ==99998:
-                        data["markers"].append({"url": f"{self.icons}reward/stardust/0.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
+                    if mon_id == 99998:
+                        data["markers"].append({"url": f"{self.icons}reward/stardust/0.png", "height": 32, "width": 32, "x_offset": 0, "y_offset": 0, "latitude": mon_lat, "longitude": mon_lon})
                     else:
                         if isinstance(mon_id, str) and "_f" in mon_id:
                             # Use direct icon URL for form
