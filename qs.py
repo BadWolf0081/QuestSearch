@@ -1333,24 +1333,18 @@ def lookup_form_id_for_mon(mon_id, form_query):
     for entry in candidates:
         form_field = entry["form"]
         if form_field:
-            # Remove the (id) part and normalize
             form_base = form_field.split(" (")[0].strip().lower()
             form_map[form_base] = entry
-            # Also allow just the form part after the underscore
             if "_" in form_base:
                 _, form_only = form_base.split("_", 1)
                 form_map[form_only] = entry
-    # Normalize user query
+    print(f"[LOOKUP DEBUG] Candidates for mon_id={mon_id}: {list(form_map.keys())}")
     form_query_clean = form_query.strip().lower() if form_query else ""
-    use_no_form = not form_query  # User entered nothing
-    use_normal = form_query_clean == "normal"
-    # Try exact match first
     if form_query_clean in form_map:
         entry = form_map[form_query_clean]
         m = re.search(r"\((\d+)\)", entry["form"])
         if m:
             return int(m.group(1)), entry["form"]
-    # Fuzzy match fallback
     import difflib
     match = difflib.get_close_matches(form_query_clean, form_map.keys(), n=1, cutoff=0.7)
     if match:
@@ -1358,59 +1352,7 @@ def lookup_form_id_for_mon(mon_id, form_query):
         m = re.search(r"\((\d+)\)", entry["form"])
         if m:
             return int(m.group(1)), entry["form"]
-    return 0, None  # fallback to default form
-
-poke_lookup = []
-for row in rows:
-    cols = re.findall(r"<td>(.*?)</td>", row, re.DOTALL)
-    if len(cols) >= 7:
-        name = re.sub(r"<.*?>", "", cols[0]).strip()
-        pokedex = re.sub(r"<.*?>", "", cols[1]).strip()
-        form = re.sub(r"<.*?>", "", cols[2]).strip()
-        costume = re.sub(r"<.*?>", "", cols[3]).strip()
-        mega = re.sub(r"<.*?>", "", cols[4]).strip()
-        filecode = re.sub(r"<.*?>", "", cols[6]).strip()
-        poke_lookup.append({
-            "name": name,
-            "pokedex": pokedex,
-            "form": form,
-            "costume": costume,
-            "mega": mega,
-            "filecode": filecode
-        })
-
-def parse_mon_args(parts):
-    shiny = False
-    mega = False
-    form_query = None
-    costume_query = None
-    custom_id = None
-    mon_name = None
-
-
-
-    # Remove shiny if present
-    if parts and parts[-1].lower() == "shiny":
-            shiny = True
-            parts = parts[:-1]
-
-    # Remove mega if present
-    if "mega" in [p.lower() for p in parts]:
-        mega = True
-        parts = [p for p in parts if p.lower() != "mega"]
-
-    # Now parse the rest
-    if len(parts) == 1 and "_" in parts[0]:
-        split = parts[0].split("_", 1)
-        mon_name = split[0]
-        form_query = split[1]
-    elif len(parts) > 1:
-        mon_name = parts[0]
-        form_query = " ".join(parts[1:])
-    else:
-        mon_name = parts[0]
-
-    return mon_name, form_query, shiny, mega
+    return None
 bot.poke_lookup = poke_lookup
 bot.get_area = get_area
 bot.fuzzy_find_pokemon = fuzzy_find_pokemon
