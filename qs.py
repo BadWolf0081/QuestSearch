@@ -964,6 +964,24 @@ bot.lookup_form_id_for_mon = lambda mon_id, form_query: lookup_form_id_for_mon(m
 bot.lookup_costume_id_for_mon = lambda mon_id, costume_query: lookup_costume_id_for_mon(mon_id, costume_query, poke_lookup)
 bot.fuzzy_find_pokemon = lambda query: fuzzy_find_pokemon(query, poke_lookup)
 bot.get_api_filecode = lambda *args, **kwargs: get_api_filecode(*args, poke_lookup=bot.poke_lookup, **kwargs)
+bot.get_data = get_data
+bot.get_lures = get_lures
+bot.get_stations = get_stations
+bot.get_datarocket = get_datarocket
+bot.get_datarocketquery = get_datarocketquery
+bot.get_datagiovani = get_datagiovani
+bot.get_dataleaders = get_dataleaders
+bot.get_alt_data = get_alt_data
+bot.get_dataitem = get_dataitem
+bot.get_alt_dataitem = get_alt_dataitem
+bot.get_datamega = get_datamega
+bot.get_alt_datamega = get_alt_datamega
+bot.get_dataroute = get_dataroute
+bot.get_datastar = get_datastar
+bot.get_alt_datastar = get_alt_datastar
+bot.get_datak = get_datak
+bot.get_datashow = get_datashow
+bot.get_datacoin = get_datacoin
 @bot.event
 async def on_ready():
     print("Connected to Discord. Ready to take commands.")
