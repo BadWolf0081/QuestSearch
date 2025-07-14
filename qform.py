@@ -63,9 +63,20 @@ async def setup(bot):
                 formsen = json.load(f)
             poke_lookup = bot.poke_lookup  # or load from api.json if not already loaded
 
+            # --- Load index.json for icon existence check ---
+            with open("data/forms/index.json", encoding="utf-8") as f:
+                icon_index = json.load(f)
+
             form_id, form_name = find_form_id_for_mon(mon_id, form_query, formsen, poke_lookup)
 
-            if not form_id:
+            # Check if the icon file exists in index.json (valid form for this Pokémon)
+            valid_form = False
+            if form_id is not None:
+                icon_filename = f"{mon_id}_f{form_id}.png"
+                if icon_filename in icon_index:
+                    valid_form = True
+
+            if not form_id or not valid_form:
                 await ctx.send(f"Could not find form '{form_query}' for {mon['name']}")
                 return
 
