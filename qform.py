@@ -30,28 +30,23 @@ async def setup(bot):
                 icon_index = json.load(f)
 
             # --- Find pokedex number for the pokemon ---
-            # Use bot.forms (loaded from forms/en.json etc) for name->dex lookup
-            # Try to match pokemon_name to a pokedex number
-            def get_pokedex_id_from_name(name, forms_dict):
+            # Use mon_names/en.txt for name->dex lookup
+            import ast
+            with open(f"data/mon_names/{bot.config['language']}.txt", encoding="utf-8") as f:
+                mon_names = ast.literal_eval(f.read())
+
+            def get_pokedex_id_from_name(name, names_dict):
                 # Try exact match
-                for dex, forms in forms_dict.items():
-                    for form_id, form_name in forms.items():
-                        if form_name.lower() == name.lower():
-                            return int(dex)
+                for mon_name, dex in names_dict.items():
+                    if mon_name.lower() == name.lower():
+                        return int(dex)
                 # Fuzzy match
-                all_names = []
-                for dex, forms in forms_dict.items():
-                    for form_id, form_name in forms.items():
-                        all_names.append((form_name, dex))
-                matches = difflib.get_close_matches(name.lower(), [n[0].lower() for n in all_names], n=1, cutoff=0.7)
+                matches = difflib.get_close_matches(name.lower(), [n.lower() for n in names_dict.keys()], n=1, cutoff=0.7)
                 if matches:
-                    for form_name, dex in all_names:
-                        if form_name.lower() == matches[0]:
-                            return int(dex)
+                    return int(names_dict[matches[0]])
                 return None
 
-            # Try to get pokedex number from bot.forms (language file)
-            pokedex_id = get_pokedex_id_from_name(pokemon_name, bot.forms)
+            pokedex_id = get_pokedex_id_from_name(pokemon_name, mon_names)
             if pokedex_id is None:
                 await ctx.send(f"Could not find Pokémon: {pokemon_name}")
                 return
