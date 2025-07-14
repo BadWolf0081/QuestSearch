@@ -317,7 +317,7 @@ async def setup(bot):
             print(f"[QFORM] Area: {area[1]}, Pokémon: {pokemon_name}, Form: {form_name} (id={found_form_id})")
 
             # Query for quests with this Pokémon and form
-            quests = await bot.get_data(area, pokedex_id)
+            quests = await bot.get_data(bot.config, area, pokedex_id)
             found = False
             entries = []
 
