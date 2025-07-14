@@ -27,7 +27,7 @@ async def setup(bot):
             args = [a for a in args if a]
 
             # --- Load area names, Pokémon names, and form names for matching ---
-            area_names = [a.lower() for a in bot.areas.keys()]
+            area_names = [a.lower() for a in bot.get_area()]  # if such a function exists
             # Use poke_lookup for Pokémon names
             pokemon_names = [p["name"].lower() for p in bot.poke_lookup]
             # Load form names from formsen.json
