@@ -39,8 +39,6 @@ short = pyshorteners.Shortener().tinyurl.short
 if bot.config['use_map']:
     bot.map_url = util.maps.map_url(config['map'], config['map_url'])
 
-### LANG FILES
-
 dts_lang = bot.config['language']
 if not bot.config['language'] in ["en", "de", "fr", "es", "pl"]:
     dts_lang = "en"
@@ -69,19 +67,15 @@ if not bot.config['language'] in ["en", "de", "fr", "es"]:
 with open(f"data/items/{item_lang}.json", encoding="utf-8") as f:
     bot.items = json.load(f)
 
-### LANG FILES STOP
-
 with open("config/geofence.json", encoding="utf-8") as f:
     bot.geofences = json.load(f)
     
 with open("config/emotes.json", encoding="utf-8") as f:
     bot.custom_emotes = json.load(f)
 
-# Load and parse api.json at startup
 with open("data/api.json", encoding="utf-8") as f:
     api_data = f.read()
 
-# Extract all rows from the HTML table in api.json
 rows = re.findall(r"<tr>(.*?)</tr>", api_data, re.DOTALL)
 poke_lookup = []
 for row in rows:
@@ -92,8 +86,7 @@ for row in rows:
         form = re.sub(r"<.*?>", "", cols[2]).strip()
         costume = re.sub(r"<.*?>", "", cols[3]).strip()
         mega = re.sub(r"<.*?>", "", cols[4]).strip()
-        # filecode = re.sub(r"<.*?>", "", cols[5]).strip()  # Full UICON (old)
-        filecode = re.sub(r"<.*?>", "", cols[6]).strip()    # Used UICON (new)
+        filecode = re.sub(r"<.*?>", "", cols[6]).strip()
         poke_lookup.append({
             "name": name,
             "pokedex": pokedex,
@@ -127,9 +120,7 @@ def get_area(areaname):
     area_list = [stringfence, namefence]
     return area_list
 
-bot.get_area = get_area  # <-- Add this line after the function definition
-
-# --- Helper Functions for DRY code ---
+bot.get_area = get_area
 
 def make_loading_embed(title, text, loading):
     loading_img = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif"
@@ -179,7 +170,7 @@ def add_quest_entry(
         else:
             text = text + theend
         length += len(entry)
-        return text, length, True  # True = break/stop
+        return text, length, True
     else:
         if shiny:
             text = entry + text
@@ -198,7 +189,7 @@ async def quest(ctx, areaname="", *, args=""):
     text = ""
     loading = bot.locale['loading_quests']
 
-    embed = discord.Embed()  # <-- ADD THIS LINE
+    embed = discord.Embed()
 
     area = get_area(areaname)
     if not area[1] == bot.locale['all']:
@@ -738,7 +729,6 @@ async def quest(ctx, areaname="", *, args=""):
             elif bot.config['static_provider'] == "tileserver":
                 image = await bot.static_map.quest(lat_list, lon_list, reward_items, reward_mons, bot.custom_emotes)
 
-        # Replace the placeholder with the real image
         embed.set_image(url=image)
         await message.edit(embed=embed)
     else:
@@ -787,7 +777,7 @@ if __name__ == "__main__":
 
     async def main():
         await bot.load_extension("qform")
-        await bot.load_extension("util.extra_commands")  # <-- Add this line
+        await bot.load_extension("util.extra_commands")
         await bot.start(bot.config['bot_token'])
 
     asyncio.run(main())
