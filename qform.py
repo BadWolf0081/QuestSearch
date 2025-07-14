@@ -177,12 +177,13 @@ async def setup(bot):
                             if not q_form_id or int(q_form_id) == 0:
                                 lat_list.append(lat)
                                 lon_list.append(lon)
-                                mons.append((pokedex_id, lat, lon))
+                                mons.append((pokedex_id, lat, lon))  # base icon
                         else:
                             if int(q_form_id) == int(found_form_id):
                                 lat_list.append(lat)
                                 lon_list.append(lon)
-                                mons.append((pokedex_id, lat, lon))
+                                # Use the correct icon filename for forms
+                                mons.append((f"{pokedex_id}_f{found_form_id}", lat, lon))
 
                     if mons and isinstance(lat_list, list) and isinstance(lon_list, list):
                         msg = await ctx.send(embed=embed)
