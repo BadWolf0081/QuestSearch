@@ -115,12 +115,22 @@ async def setup(bot):
                     return False
 
                 if use_normal:
-                    # Only use base icon and only match quests with no form_id or form_id==0
-                    icon_filename = f"{pokedex_id}.png"
+                    # Try to find the "Normal" form ID for this Pokémon
+                    normal_form_id = None
+                    if str(pokedex_id) in forms_lang:
+                        for fid, fname in forms_lang[str(pokedex_id)].items():
+                            if fname.strip().lower() == "normal":
+                                normal_form_id = fid
+                                break
+                    if normal_form_id is None:
+                        normal_form_id = 0  # fallback
+
+                    icon_filename = f"{pokedex_id}_f{normal_form_id}.png" if normal_form_id != 0 else f"{pokedex_id}.png"
                     if not search_icon_index(icon_index, icon_filename):
                         await ctx.send(f"No valid icon found for {pokemon_name} (Normal form)")
                         return
-                    icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{pokedex_id}.png"
+                    icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
+                    found_form_id = int(normal_form_id)
                 else:
                     # Use form logic as before
                     form_ids = get_form_ids_by_name(form_query, formsen)
