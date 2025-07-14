@@ -66,9 +66,12 @@ async def setup(bot):
 
             for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
                 quest_list = json.loads(quest_json)
-                if not quest_list or "info" not in quest_list[0]:
+                if not quest_list or not isinstance(quest_list, list):
                     continue  # skip empty or malformed quest entries
-                quest_info = quest_list[0]["info"]
+                first = quest_list[0]
+                if not isinstance(first, dict) or "info" not in first:
+                    continue  # skip malformed quest entries
+                quest_info = first["info"]
                 q_form_id = quest_info.get("form_id", 0)
                 if int(q_form_id) == int(form_id):
                     found = True
