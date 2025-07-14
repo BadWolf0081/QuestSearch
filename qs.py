@@ -956,7 +956,11 @@ async def custom(ctx, *, args):
     except Exception as e:
         print(f"[CUSTOM ERROR] {e}")
         await ctx.send("Could not find that Pokémon or custom icon.")
-
+bot.poke_lookup = poke_lookup
+bot.lookup_form_id_for_mon = lambda mon_id, form_query: lookup_form_id_for_mon(mon_id, form_query, poke_lookup)
+bot.lookup_costume_id_for_mon = lambda mon_id, costume_query: lookup_costume_id_for_mon(mon_id, costume_query, poke_lookup)
+bot.fuzzy_find_pokemon = lambda query: fuzzy_find_pokemon(query, poke_lookup)
+bot.get_api_filecode = lambda *args, **kwargs: get_api_filecode(*args, poke_lookup=bot.poke_lookup, **kwargs)
 @bot.event
 async def on_ready():
     print("Connected to Discord. Ready to take commands.")
@@ -968,8 +972,6 @@ async def on_ready():
 with open ("data/forms/formsen.json", encoding="utf-8") as f:
     forms_data = json.load(f)
 
-bot.poke_lookup = poke_lookup
-bot.lookup_form_id_for_mon = lambda mon_id, form_query: lookup_form_id_for_mon(mon_id, form_query, poke_lookup)
-bot.lookup_costume_id_for_mon = lambda mon_id, costume_query: lookup_costume_id_for_mon(mon_id, costume_query, poke_lookup)
-bot.fuzzy_find_pokemon = lambda query: fuzzy_find_pokemon(query, poke_lookup)
-bot.get_api_filecode = lambda *args, **kwargs: get_api_filecode(*args, poke_lookup=bot.poke_lookup, **kwargs)
+if __name__ == "__main__":
+    print("Starting QuestSearch bot...")
+    bot.run(bot.config['bot_token'])
