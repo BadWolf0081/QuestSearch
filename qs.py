@@ -127,6 +127,8 @@ def get_area(areaname):
     area_list = [stringfence, namefence]
     return area_list
 
+bot.get_area = get_area  # <-- Add this line after the function definition
+
 # --- Helper Functions for DRY code ---
 
 def make_loading_embed(title, text, loading):
