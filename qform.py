@@ -104,6 +104,10 @@ async def setup(bot):
                 use_no_form = not form_query
                 form_id_for_mon = None
                 form_name = None
+                icon_url = None
+                found_form_id = None
+                use_costume = False
+                costume_id_for_match = None
 
                 if str(pokedex_id) in forms_lang and not use_no_form:
                     # Always search values for the form name (case-insensitive, strip whitespace)
@@ -139,7 +143,6 @@ async def setup(bot):
                     icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
                     found_form_id = int(form_id_for_mon)
                 else:
-                    # ...existing fallback/costume logic...
                     await ctx.send(
                         embed=discord.Embed(
                             title=f"{pokemon_name.title()} ({form_query.title()}) Quests - {area[1]}",
@@ -172,6 +175,10 @@ async def setup(bot):
                 use_no_form = not form_query
                 form_id_for_mon = None
                 form_name = None
+                icon_url = None
+                found_form_id = None
+                use_costume = False
+                costume_id_for_match = None
 
                 if str(pokedex_id) in forms_lang and not use_no_form:
                     # Always search values for the form name (case-insensitive, strip whitespace)
