@@ -152,7 +152,13 @@ async def setup(bot):
                             use_costume = True
                             costume_id_for_match = found_costume_id
                         else:
-                            await ctx.send(f"Could not find any form or costume matching '{form_query}'")
+                            await ctx.send(
+                                embed=discord.Embed(
+                                    title=f"{pokemon_name.title()} ({form_query.title()}) Quests - {area[1]}",
+                                    description=f"Could not find any form or costume matching '{form_query}'",
+                                    color=discord.Color.red()
+                                )
+                            )
                             return
                     else:
                         use_costume = False
