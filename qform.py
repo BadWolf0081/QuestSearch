@@ -125,4 +125,15 @@ async def setup(bot):
             if found:
                 embed = discord.Embed(
                     title=f"{pokemon_name.title()} ({form_name}) Quests - {area[1]}",
-                    description="\n".join(entries) if entries
+                    description="\n".join(entries) if entries else "No quests found.",
+                    color=discord.Color.blue()
+                )
+                if icon_url:
+                    embed.set_thumbnail(url=icon_url)
+                await ctx.send(embed=embed)
+                print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name})")
+            else:
+                await ctx.send(f"No quests found for {pokemon_name} with form '{form_name}' in {area[1]}")
+        except Exception as e:
+            await ctx.send(f"An error occurred: {str(e)}")
+            print(f"[QFORM ERROR] {str(e)}")
