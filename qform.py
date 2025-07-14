@@ -190,6 +190,11 @@ async def setup(bot):
                         try:
                             import asyncio
                             await asyncio.sleep(1)
+                            # Debug output
+                            print(f"[QFORM DEBUG] lat_list: {lat_list} (type: {type(lat_list)})")
+                            print(f"[QFORM DEBUG] lon_list: {lon_list} (type: {type(lon_list)})")
+                            print(f"[QFORM DEBUG] mons: {mons} (type: {type(mons)})")
+                            print(f"[QFORM DEBUG] bot.custom_emotes: {bot.custom_emotes} (type: {type(bot.custom_emotes)})")
                             static_map_url = await bot.static_map.quest(
                                 lat_list, lon_list, 0, mons, bot.custom_emotes
                             )
