@@ -96,7 +96,11 @@ async def setup(bot):
             logging.debug(f"[QFORM] Final form_id_for_mon={form_id_for_mon}, form_name={form_name}")
 
             if form_id_for_mon:
-                icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
+                # Special case: "Normal" form (form_id 0) uses the base icon
+                if int(form_id_for_mon) == 0:
+                    icon_filename = f"{pokedex_id}.png"
+                else:
+                    icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
                 print(f"[QFORM DEBUG] Using icon_filename: {icon_filename}")
                 if not search_icon_index(icon_index, icon_filename):
                     # fallback to base icon
