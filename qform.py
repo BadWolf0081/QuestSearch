@@ -94,7 +94,20 @@ async def setup(bot):
             icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
 
             for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
-                quest_list = json.loads(quest_json)
+                try:
+                    # Defensive: only parse up to the first valid JSON array/object
+                    quest_json_str = quest_json.strip()
+                    if quest_json_str.startswith("["):
+                        # Try to find the matching closing bracket for the array
+                        end_idx = quest_json_str.find("]") + 1
+                        quest_json_str = quest_json_str[:end_idx]
+                    elif quest_json_str.startswith("{"):
+                        end_idx = quest_json_str.find("}") + 1
+                        quest_json_str = quest_json_str[:end_idx]
+                    quest_list = json.loads(quest_json_str)
+                except Exception as err:
+                    print(f"[QFORM ERROR] Could not parse quest_json: {quest_json} ({err})")
+                    continue
                 if not quest_list or not isinstance(quest_list, list):
                     continue  # skip empty or malformed quest entries
                 first = quest_list[0]
@@ -112,35 +125,4 @@ async def setup(bot):
             if found:
                 embed = discord.Embed(
                     title=f"{pokemon_name.title()} ({form_name}) Quests - {area[1]}",
-                    description="\n".join(entries) if entries else "No quests found.",
-                    color=discord.Color.blue()
-                )
-                if icon_url:
-                    embed.set_thumbnail(url=icon_url)
-
-                # --- Add static map if enabled ---
-                if getattr(bot, "static_map", None) is not None and entries:
-                    # Collect all lat/lon for the found quests
-                    quest_coords = [(lat, lon) for _, _, lat, lon, _, _ in quests if int(json.loads(_)[0]["info"].get("form_id", 0)) == int(found_form_id)]
-                    # Prepare mons list for static_map.quest: (mon_id, lat, lon)
-                    mons = [(pokedex_id, lat, lon) for lat, lon in quest_coords]
-                    # items param is not used for mon icons, so pass 0
-                    static_map_url = await bot.static_map.quest(
-                        [lat for _, lat, _ in mons],
-                        [lon for _, _, lon in mons],
-                        0,
-                        mons,
-                        bot.custom_emotes
-                    )
-                    if static_map_url:
-                        embed.set_image(url=static_map_url)
-
-                await ctx.send(embed=embed)
-                print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name})")
-            else:
-                await ctx.send(f"No quests found for {pokemon_name} ({form_name}) in {area[1]}")
-        except Exception as e:
-            print(f"[QFORM ERROR] {e}")
-            await ctx.send("Error processing your request.")
-
-    bot.add_command(commands.Command(qform, name="qform"))
+                    description="\n".join(entries) if entries
