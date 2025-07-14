@@ -245,15 +245,39 @@ async def setup(bot):
                 if icon_url:
                     embed.set_thumbnail(url=icon_url)
 
-                # Set the same placeholder image as !quest
+                # Set the placeholder image first
                 placeholder_img = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif"
                 embed.set_image(url=placeholder_img)
 
-                static_map_url = None
+                msg = await ctx.send(embed=embed)
+
+                # Now generate and update with the static map if possible
                 if getattr(bot, "static_map", None) is not None and entries:
-                    # ...existing static map logic...
-                    pass
-                await ctx.send(embed=embed)
+                    try:
+                        lat_list = []
+                        lon_list = []
+                        mons = []
+                        # You may need to build mons as (id, lat, lon) tuples
+                        for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
+                            # Only add those that matched
+                            if stop_name[:30] in [e.split(']')[0][1:] for e in entries]:
+                                if use_costume:
+                                    mons.append((f"{pokedex_id}_c{costume_id_for_match}", lat, lon))
+                                elif found_form_id:
+                                    mons.append((f"{pokedex_id}_f{found_form_id}", lat, lon))
+                                else:
+                                    mons.append((pokedex_id, lat, lon))
+                                lat_list.append(lat)
+                                lon_list.append(lon)
+                        # Call the static map generator
+                        print(f"[QFORM DEBUG] Calling static_map.quest with {len(lat_list)} locations")
+                        static_map_url = await bot.static_map.quest(lat_list, lon_list, [], mons, bot.custom_emotes)
+                        print(f"[QFORM DEBUG] static_map_url: {static_map_url}")
+                        if static_map_url:
+                            embed.set_image(url=static_map_url)
+                            await msg.edit(embed=embed)
+                    except Exception as e:
+                        print(f"[QFORM ERROR] Static map failed: {e}")
                 print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name})")
             else:
                 # Show only the Pokémon icon, no placeholder image, if no quests found
