@@ -143,13 +143,19 @@ class static_map:
                 for item_id, item_lat, item_lon in items:
                     data["markers"].append({"url": f"{self.icons}reward/item/{item_id}.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": item_lat,"longitude": item_lon})
 
+            print(f"[STATIC MAP DEBUG] POSTing to {self.key}staticmap")
+            print(f"[STATIC MAP DEBUG] POST data: {json.dumps(data)[:500]}")  # print first 500 chars
             result = requests.post(f"{self.key}staticmap", json=data, headers={"content-type": "application/json;charset=utf-8"})
+            print(f"[STATIC MAP DEBUG] Response status: {result.status_code}")
+            print(f"[STATIC MAP DEBUG] Response headers: {result.headers}")
+            if result.status_code != 200:
+                print(f"[STATIC MAP ERROR] Bad response: {result.text[:500]}")
             stream = BytesIO(result.content)
             image_msg = await self.trash_channel.send(file=discord.File(stream, filename="map.png"))
-            static_map = image_msg.attachments[0].url
+            print(f"[STATIC MAP DEBUG] Sent image, attachments: {image_msg.attachments}")
+            static_map = image_msg.attachments[0].url if image_msg.attachments else None
             stream.close()
-
-        return static_map
+            return static_map
 
 class map_url:
     def __init__(self, frontend, url):
