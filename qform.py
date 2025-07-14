@@ -40,25 +40,31 @@ async def setup(bot):
             # Query for quests with this Pokémon and form
             quests = await bot.get_data(area, mon_id)
             found = False
+            entries = []
+            filecode = bot.get_api_filecode(mon_id, form_id=form_id)
+            icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png" if filecode else ""
+
             for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
                 quest_info = json.loads(quest_json)[0]["info"]
                 q_form_id = quest_info.get("form_id", 0)
                 if int(q_form_id) == int(form_id):
                     found = True
-                    filecode = bot.get_api_filecode(
-                        mon_id,
-                        form_id=form_id
-                    )
-                    icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png" if filecode else ""
-                    reply = f"**{mon['name']}** ({form_name}) at **{stop_name}**"
-                    if icon_url:
-                        embed = discord.Embed(description=reply)
-                        embed.set_image(url=icon_url)
-                        await ctx.send(embed=embed)
-                    else:
-                        await ctx.send(reply)
-                    print(f"[QFORM] Sent: {reply} | Icon: {icon_url}")
-            if not found:
+                    # Google Maps link
+                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+                    # Truncate stop name if too long
+                    stop_name_short = stop_name[:30]
+                    entries.append(f"[{stop_name_short}]({map_url})")
+            if found:
+                embed = discord.Embed(
+                    title=f"{mon['name']} ({form_name}) Quests - {area[1]}",
+                    description="\n".join(entries) if entries else "No quests found.",
+                    color=discord.Color.blue()
+                )
+                if icon_url:
+                    embed.set_thumbnail(url=icon_url)
+                await ctx.send(embed=embed)
+                print(f"[QFORM] Sent {len(entries)} results for {mon['name']} ({form_name})")
+            else:
                 await ctx.send(f"No quests found for {mon['name']} ({form_name}) in {area[1]}")
         except Exception as e:
             print(f"[QFORM ERROR] {e}")
