@@ -100,7 +100,9 @@ async def setup(bot):
                 costume_id_for_match = None
             else:
                 # --- Handle form logic ---
-                use_normal = not form_query or form_query.strip().lower() == "normal"
+                form_query_clean = form_query.strip().lower() if form_query else ""
+                use_no_form = not form_query
+                use_normal = form_query_clean == "normal"
                 found_form_id = None
                 form_name = "Normal"
                 icon_url = None
@@ -115,7 +117,6 @@ async def setup(bot):
                     return False
 
                 if use_normal:
-                    # Try to find the "Normal" form ID for this Pokémon
                     normal_form_id = None
                     if str(pokedex_id) in forms_lang:
                         for fid, fname in forms_lang[str(pokedex_id)].items():
@@ -242,10 +243,18 @@ async def setup(bot):
                     continue
                 quest_info = first["info"]
                 q_form_id = quest_info.get("form_id", 0)
-                q_costume_id = quest_info.get("costume_id", 0)  # <-- add this line
+                q_costume_id = quest_info.get("costume_id", 0)
 
-                if use_normal:
+                if use_no_form:
+                    # Only match if form_id is missing, None, or 0
                     if not q_form_id or int(q_form_id) == 0:
+                        found = True
+                        map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
+                        stop_name_short = stop_name[:30]
+                        entries.append(f"[{stop_name_short}]({map_url})")
+                elif use_normal:
+                    # Only match if form_id matches the "Normal" form's ID
+                    if int(q_form_id) == int(normal_form_id):
                         found = True
                         map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
                         stop_name_short = stop_name[:30]
