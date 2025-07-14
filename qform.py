@@ -6,6 +6,8 @@ import logging
 from discord.ext import commands
 
 logging.basicConfig(level=logging.DEBUG)
+logging.getLogger("discord").setLevel(logging.WARNING)
+logging.getLogger("discord.http").setLevel(logging.WARNING)
 
 async def setup(bot):
     async def qform(ctx, areaname="", pokemon_name="", form_query=""):
