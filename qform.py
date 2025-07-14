@@ -35,12 +35,30 @@ async def setup(bot):
             with open(f"data/mon_names/{bot.config['language']}.txt", encoding="utf-8") as f:
                 mon_names = ast.literal_eval(f.read())
 
+            # --- 1. Fuzzy form name lookup: find all matching form IDs ---
+            def get_form_ids_by_name(form_query, formsen):
+                # Lowercase all values for fuzzy matching
+                form_map = {int(k.replace("form_", "")): v for k, v in formsen.items() if k.startswith("form_")}
+                # Exact match
+                matches = [fid for fid, name in form_map.items() if name.lower() == form_query.lower()]
+                if matches:
+                    return matches
+                # Fuzzy match
+                close = difflib.get_close_matches(form_query.lower(), [v.lower() for v in form_map.values()], n=5, cutoff=0.7)
+                if close:
+                    return [fid for fid, name in form_map.items() if name.lower() in close]
+                return []
+
+            form_ids = get_form_ids_by_name(form_query, formsen)
+            if not form_ids:
+                await ctx.send(f"Could not find any form matching '{form_query}'")
+                return
+
+            # --- 2. Fuzzy Pokémon name lookup ---
             def get_pokedex_id_from_name(name, names_dict):
-                # Try exact match
                 for mon_name, dex in names_dict.items():
                     if mon_name.lower() == name.lower():
                         return int(dex)
-                # Fuzzy match
                 matches = difflib.get_close_matches(name.lower(), [n.lower() for n in names_dict.keys()], n=1, cutoff=0.7)
                 if matches:
                     return int(names_dict[matches[0]])
@@ -51,32 +69,8 @@ async def setup(bot):
                 await ctx.send(f"Could not find Pokémon: {pokemon_name}")
                 return
 
-            # --- Find form id for the given form_query and pokedex_id ---
-            def get_form_id_for_query(pokedex_id, form_query, forms_dict):
-                forms_for_mon = forms_dict.get(str(pokedex_id), {})
-                # Try exact match
-                for form_id, form_name in forms_for_mon.items():
-                    if form_name.lower() == form_query.lower():
-                        return int(form_id), form_name
-                # Fuzzy match
-                matches = difflib.get_close_matches(form_query.lower(), [v.lower() for v in forms_for_mon.values()], n=1, cutoff=0.7)
-                if matches:
-                    for form_id, form_name in forms_for_mon.items():
-                        if form_name.lower() == matches[0]:
-                            return int(form_id), form_name
-                return None, None
-
-            form_id, form_name = get_form_id_for_query(pokedex_id, form_query, bot.forms)
-            if form_id is None:
-                await ctx.send(f"Could not find form '{form_query}' for {pokemon_name}")
-                return
-
-            # --- Check if the icon file exists in index.json (valid form for this Pokémon) ---
-            icon_filename = f"{pokedex_id}_f{form_id}.png"
-            valid_form = False
-
+            # --- 3. Check for icon existence in index.json ---
             def search_icon_index(obj, filename):
-                """Recursively search for filename in any list value in obj."""
                 if isinstance(obj, list):
                     return filename in obj
                 elif isinstance(obj, dict):
@@ -85,20 +79,27 @@ async def setup(bot):
                             return True
                 return False
 
-            if search_icon_index(icon_index, icon_filename):
-                valid_form = True
+            found_form_id = None
+            for form_id in form_ids:
+                icon_filename = f"{pokedex_id}_f{form_id}.png"
+                if search_icon_index(icon_index, icon_filename):
+                    found_form_id = form_id
+                    break
 
-            if not valid_form:
-                await ctx.send(f"Form '{form_query}' is not valid for {pokemon_name}")
+            if not found_form_id:
+                await ctx.send(f"No valid icon found for {pokemon_name} with form '{form_query}'")
                 return
 
-            print(f"[QFORM] Area: {area[1]}, Pokémon: {pokemon_name}, Form: {form_name} (id={form_id})")
+            # Now you have: pokedex_id, found_form_id, and can proceed as before
+            form_name = formsen.get(f"form_{found_form_id}", form_query.title())
+
+            print(f"[QFORM] Area: {area[1]}, Pokémon: {pokemon_name}, Form: {form_name} (id={found_form_id})")
 
             # Query for quests with this Pokémon and form
             quests = await bot.get_data(area, pokedex_id)
             found = False
             entries = []
-            filecode = f"{pokedex_id}_f{form_id}"
+            filecode = f"{pokedex_id}_f{found_form_id}"
             icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{filecode}.png"
 
             for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
@@ -110,7 +111,7 @@ async def setup(bot):
                     continue  # skip malformed quest entries
                 quest_info = first["info"]
                 q_form_id = quest_info.get("form_id", 0)
-                if int(q_form_id) == int(form_id):
+                if int(q_form_id) == int(found_form_id):
                     found = True
                     # Google Maps link
                     map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
