@@ -119,56 +119,45 @@ async def setup(bot):
                 form_id_for_mon = None
                 form_name = None
 
-                logging.debug(f"[QFORM] form_query: '{form_query}' | form_query_clean: '{form_query_clean}' | use_no_form: {use_no_form}")
+                # 1. Build a list of all possible form IDs for this Pokémon from formsen.json
+                form_ids = []
+                form_map = {}
+                for k, v in formsen.items():
+                    if k.startswith("form_"):
+                        fid = int(k.replace("form_", ""))
+                        # Only include forms that have an icon for this Pokémon
+                        icon_filename = f"{pokedex_id}_f{fid}.png"
+                        if search_icon_index(icon_index, icon_filename):
+                            form_ids.append(fid)
+                            form_map[fid] = v
 
-                if str(pokedex_id) in forms_lang and not use_no_form:
-                    logging.debug(f"[QFORM] forms_lang[{pokedex_id}]: {forms_lang[str(pokedex_id)]}")
-                    for fid, fname in forms_lang[str(pokedex_id)].items():
-                        logging.debug(f"[QFORM] Checking form: fid={fid}, fname='{fname}' vs '{form_query_clean}'")
-                        if fname.strip().lower() == form_query_clean:
-                            form_id_for_mon = fid
-                            form_name = fname
-                            logging.info(f"[QFORM] Exact match found: fid={fid}, fname='{fname}'")
-                            break
-                    # Fuzzy/partial match if not exact
-                    if not form_id_for_mon and form_query:
-                        all_names = [fname.strip().lower() for fname in forms_lang[str(pokedex_id)].values()]
-                        close = difflib.get_close_matches(form_query_clean, all_names, n=1, cutoff=0.7)
-                        logging.debug(f"[QFORM] Fuzzy matches for '{form_query_clean}': {close}")
-                        if close:
-                            for fid, fname in forms_lang[str(pokedex_id)].items():
-                                if fname.strip().lower() == close[0]:
-                                    form_id_for_mon = fid
-                                    form_name = fname
-                                    logging.info(f"[QFORM] Fuzzy match found: fid={fid}, fname='{fname}'")
-                                    break
+                # 2. Try exact match
+                for fid, fname in form_map.items():
+                    if fname.strip().lower() == form_query_clean:
+                        form_id_for_mon = fid
+                        form_name = fname
+                        break
 
-                logging.debug(f"[QFORM] Result: form_id_for_mon={form_id_for_mon}, form_name={form_name}")
+                # 3. Try fuzzy match if not exact
+                if form_id_for_mon is None and form_query:
+                    all_names = [fname.strip().lower() for fname in form_map.values()]
+                    close = difflib.get_close_matches(form_query_clean, all_names, n=1, cutoff=0.7)
+                    if close:
+                        for fid, fname in form_map.items():
+                            if fname.strip().lower() == close[0]:
+                                form_id_for_mon = fid
+                                form_name = fname
+                                break
 
-                if use_no_form:
-                    icon_filename = f"{pokedex_id}.png"
-                    logging.debug(f"[QFORM] Using no form icon: {icon_filename}")
-                    if not search_icon_index(icon_index, icon_filename):
-                        await ctx.send(f"No valid icon found for {pokemon_name} (no form)")
-                        return
-                    icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
-                    form_name = "No Form"
-                    found_form_id = 0
-                elif form_id_for_mon is not None:
-                    icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
-                    logging.debug(f"[QFORM] Using form icon: {icon_filename}")
-                    if not search_icon_index(icon_index, icon_filename):
-                        await ctx.send(f"No valid icon found for {pokemon_name} (form: {form_name})")
-                        return
-                    icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
-                    found_form_id = int(form_id_for_mon)
-                else:
-                    logging.error(f"[QFORM] No form match for '{form_query}' on {pokemon_name} (id={pokedex_id})")
+                # 4. If still not found, show available forms
+                if form_id_for_mon is None and not use_no_form:
+                    available_forms = [fname for fname in form_map.values()]
+                    forms_list = "\n".join(f"- {fname}" for fname in available_forms)
                     await ctx.send(
                         embed=discord.Embed(
-                            title=f"{pokemon_name.title()} ({form_query.title()}) Quests - {area[1]}",
-                            description=f"Could not find any form or costume matching '{form_query}'",
-                            color=discord.Color.red()
+                            title=f"No valid form found for {pokemon_name.title()} with form '{form_query}'",
+                            description=f"Available forms for {pokemon_name.title()}:\n{forms_list}",
+                            color=discord.Color.orange()
                         )
                     )
                     return
