@@ -974,4 +974,9 @@ with open ("data/forms/formsen.json", encoding="utf-8") as f:
 
 if __name__ == "__main__":
     print("Starting QuestSearch bot...")
-    bot.run(bot.config['bot_token'])
+
+    async def main():
+        await bot.load_extension("qform")
+        await bot.start(bot.config['bot_token'])
+
+    asyncio.run(main())
