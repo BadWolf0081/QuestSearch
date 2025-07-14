@@ -1341,16 +1341,18 @@ def lookup_form_id_for_mon(mon_id, form_query):
                 _, form_only = form_base.split("_", 1)
                 form_map[form_only] = entry
     # Normalize user query
-    form_query_norm = form_query.strip().lower().replace(" ", "_")
+    form_query_clean = form_query.strip().lower() if form_query else ""
+    use_no_form = not form_query  # User entered nothing
+    use_normal = form_query_clean == "normal"
     # Try exact match first
-    if form_query_norm in form_map:
-        entry = form_map[form_query_norm]
+    if form_query_clean in form_map:
+        entry = form_map[form_query_clean]
         m = re.search(r"\((\d+)\)", entry["form"])
         if m:
             return int(m.group(1)), entry["form"]
     # Fuzzy match fallback
     import difflib
-    match = difflib.get_close_matches(form_query_norm, form_map.keys(), n=1, cutoff=0.7)
+    match = difflib.get_close_matches(form_query_clean, form_map.keys(), n=1, cutoff=0.7)
     if match:
         entry = form_map[match[0]]
         m = re.search(r"\((\d+)\)", entry["form"])
