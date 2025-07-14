@@ -1,10 +1,17 @@
 import aiomysql
 
-async def get_data(area, mon_id):
-    conn = await aiomysql.connect(host=config['db_host'],user=config['db_user'],password=config['db_pass'],db=config['db_dbname'],port=config['db_port'])
-    cur = await conn.cursor()
+async def get_data(config, area, mon_id):
+    conn = await aiomysql.connect(
+        host=config['db_host'],
+        user=config['db_user'],
+        password=config['db_pass'],
+        db=config['db_dbname'],
+        port=config['db_port']
+    )
     async with conn.cursor() as cur:
-        await cur.execute(f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_pokemon_id = {mon_id} AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_pokemon_id ASC, name;")
+        await cur.execute(
+            f"SELECT quest_rewards, quest_template, lat, lon, name, id FROM pokestop WHERE quest_pokemon_id = {mon_id} AND ST_Contains(ST_GeomFromText('POLYGON(({area[0]}))'), POINT(lat,lon)) AND updated >= UNIX_TIMESTAMP()-86400 ORDER BY quest_pokemon_id ASC, name;"
+        )
         quests = await cur.fetchall()
     await conn.ensure_closed()
     return quests
