@@ -2,7 +2,10 @@ import discord
 import json
 import re
 import difflib
+import logging
 from discord.ext import commands
+
+logging.basicConfig(level=logging.DEBUG)
 
 async def setup(bot):
     async def qform(ctx, areaname="", pokemon_name="", form_query=""):
@@ -104,31 +107,37 @@ async def setup(bot):
                 use_no_form = not form_query
                 form_id_for_mon = None
                 form_name = None
-                icon_url = None
-                found_form_id = None
-                use_costume = False
-                costume_id_for_match = None
+
+                logging.debug(f"[QFORM] form_query: '{form_query}' | form_query_clean: '{form_query_clean}' | use_no_form: {use_no_form}")
 
                 if str(pokedex_id) in forms_lang and not use_no_form:
+                    logging.debug(f"[QFORM] forms_lang[{pokedex_id}]: {forms_lang[str(pokedex_id)]}")
                     # Always search values for the form name (case-insensitive, strip whitespace)
                     for fid, fname in forms_lang[str(pokedex_id)].items():
+                        logging.debug(f"[QFORM] Checking form: fid={fid}, fname='{fname}' vs '{form_query_clean}'")
                         if fname.strip().lower() == form_query_clean:
                             form_id_for_mon = fid
                             form_name = fname
+                            logging.info(f"[QFORM] Exact match found: fid={fid}, fname='{fname}'")
                             break
                     # Fuzzy match if not exact
                     if not form_id_for_mon and form_query:
                         all_names = [fname.lower() for fname in forms_lang[str(pokedex_id)].values()]
                         close = difflib.get_close_matches(form_query_clean, all_names, n=1, cutoff=0.7)
+                        logging.debug(f"[QFORM] Fuzzy matches for '{form_query_clean}': {close}")
                         if close:
                             for fid, fname in forms_lang[str(pokedex_id)].items():
                                 if fname.lower() == close[0]:
                                     form_id_for_mon = fid
                                     form_name = fname
+                                    logging.info(f"[QFORM] Fuzzy match found: fid={fid}, fname='{fname}'")
                                     break
+
+                logging.debug(f"[QFORM] Result: form_id_for_mon={form_id_for_mon}, form_name={form_name}")
 
                 if use_no_form:
                     icon_filename = f"{pokedex_id}.png"
+                    logging.debug(f"[QFORM] Using no form icon: {icon_filename}")
                     if not search_icon_index(icon_index, icon_filename):
                         await ctx.send(f"No valid icon found for {pokemon_name} (no form)")
                         return
@@ -137,12 +146,14 @@ async def setup(bot):
                     found_form_id = 0
                 elif form_id_for_mon is not None:
                     icon_filename = f"{pokedex_id}_f{form_id_for_mon}.png"
+                    logging.debug(f"[QFORM] Using form icon: {icon_filename}")
                     if not search_icon_index(icon_index, icon_filename):
                         await ctx.send(f"No valid icon found for {pokemon_name} (form: {form_name})")
                         return
                     icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
                     found_form_id = int(form_id_for_mon)
                 else:
+                    logging.error(f"[QFORM] No form match for '{form_query}' on {pokemon_name} (id={pokedex_id})")
                     await ctx.send(
                         embed=discord.Embed(
                             title=f"{pokemon_name.title()} ({form_query.title()}) Quests - {area[1]}",
@@ -325,15 +336,18 @@ async def setup(bot):
                 quest_info = first["info"]
                 q_form_id = quest_info.get("form_id", 0)
                 q_costume_id = quest_info.get("costume_id", 0)
+                logging.debug(f"[QFORM] Quest: stop='{stop_name}', q_form_id={q_form_id}, q_costume_id={q_costume_id}")
 
                 if use_no_form:
                     if not q_form_id or int(q_form_id) == 0:
+                        logging.info(f"[QFORM] Matched NO FORM at stop '{stop_name}'")
                         found = True
                         map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
                         stop_name_short = stop_name[:30]
                         entries.append(f"[{stop_name_short}]({map_url})")
                 elif form_id_for_mon:
-                    if int(q_form_id) == int(found_form_id):
+                    if q_form_id is not None and int(q_form_id) == int(found_form_id):
+                        logging.info(f"[QFORM] Matched FORM {found_form_id} at stop '{stop_name}'")
                         found = True
                         map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
                         stop_name_short = stop_name[:30]
