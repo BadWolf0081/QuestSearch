@@ -53,10 +53,26 @@ class static_map:
 
             static_map = "https://api.mapbox.com/styles/v1/mapbox/outdoors-v11/static/"
             for mon_id, mon_lat, mon_lon in mons:
-                mon_img = custom_emotes[f"m{mon_id}"]
-                mon_img = mon_img[:-1].split(":")
-                mon_img = f"https%3A%2F%2Fcdn.discordapp.com%2Femojis%2F{mon_img[2]}.png%3Fsize=32"
-                static_map = f"{static_map}url-{mon_img}({mon_lon},{mon_lat}),"
+                if isinstance(mon_id, str) and "_f" in mon_id:
+                    # Use direct icon URL for form
+                    mon_img = f"{self.icons}pokemon/{mon_id}.png"
+                    # URL encode for Mapbox
+                    from urllib.parse import quote
+                    mon_img_enc = quote(mon_img, safe='')
+                    static_map = f"{static_map}url-{mon_img_enc}({mon_lon},{mon_lat}),"
+                else:
+                    # Use emote or base icon
+                    if f"m{mon_id}" in custom_emotes and custom_emotes[f"m{mon_id}"]:
+                        mon_img = custom_emotes[f"m{mon_id}"]
+                        mon_img = mon_img[:-1].split(":")
+                        mon_img = f"https%3A%2F%2Fcdn.discordapp.com%2Femojis%2F{mon_img[2]}.png%3Fsize=32"
+                        static_map = f"{static_map}url-{mon_img}({mon_lon},{mon_lat}),"
+                    else:
+                        # fallback to icon url if no emote
+                        mon_img = f"{self.icons}pokemon/{str(mon_id)}.png"
+                        from urllib.parse import quote
+                        mon_img_enc = quote(mon_img, safe='')
+                        static_map = f"{static_map}url-{mon_img_enc}({mon_lon},{mon_lat}),"
             for item_id, item_lat, item_lon in items:
                 item_img = custom_emotes[f"i{item_id}"]
                 item_img = item_img[:-1].split(":")
