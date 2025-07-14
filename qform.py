@@ -29,14 +29,6 @@ async def setup(bot):
             with open("data/forms/index.json", encoding="utf-8") as f:
                 icon_index = json.load(f)
 
-            # --- Find pokedex number for the pokemon ---
-            # Use mon_names/en.txt for name->dex lookup
-            import ast
-            with open(f"data/mon_names/{bot.config['language']}.txt", encoding="utf-8") as f:
-                lines = f.readlines()
-                dict_str = "".join(line for line in lines if not line.strip().startswith("//"))
-                mon_names = ast.literal_eval(dict_str)
-
             # --- 1. Fuzzy form name lookup: find all matching form IDs ---
             def get_form_ids_by_name(form_query, formsen):
                 # Lowercase all values for fuzzy matching
