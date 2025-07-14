@@ -182,6 +182,34 @@ def set_shiny_embed(embed, mon, area):
     embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}_s.png")
     embed.title = f"{mon.name} Quests SHINY DETECTED!! - {area[1]}"
 
+def add_quest_entry(
+    stop_name, lat, lon, stop_id, item_id, items, amount, shiny, length, text, 
+    max_len=31, max_total=2400, extra=None, entry_suffix="", map_url_override=None
+):
+    stop_name = truncate_stop_name(stop_name, max_len)
+    map_url = map_url_override if map_url_override else get_map_url(lat, lon, stop_id)
+    if item_id in items and amount is not None:
+        entry = f"[{stop_name} **{amount}{entry_suffix}**]({map_url})\n"
+    elif extra:
+        entry = f"[{stop_name} **{extra}{entry_suffix}**]({map_url})\n"
+    else:
+        entry = f"[{stop_name}{entry_suffix}]({map_url})\n"
+    if length + len(entry) >= max_total:
+        theend = " lots more ..."
+        if shiny:
+            text = entry + text
+        else:
+            text = text + theend
+        length += len(entry)
+        return text, length, True  # True = break/stop
+    else:
+        if shiny:
+            text = entry + text
+        else:
+            text = text + entry
+        length += len(entry)
+        return text, length, False
+
 @bot.command(pass_context=True, aliases=bot.config['quest_aliases'])
 async def quest(ctx, areaname="", *, args=""):
     parts = args.strip().split()
@@ -319,26 +347,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"m{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png"
-    
-            if found_rewards:
-                if len(stop_name) >= 26:
-                    stop_name = stop_name[0:25]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                entry = f"[{stop_name}-**{left} Min**]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f"and more..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, 0, items, None, False, length, text,
+                max_len=26, extra=f"{left} Min"
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
     elif not item_found and mon.name == "Coins":
         for lat, lon, stop_name, stop_id, expiration in quests:
             end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
@@ -347,26 +363,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"m{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}misc/event_coin.png"
-    
-            if found_rewards:
-                if len(stop_name)+len(end) >= 26:
-                    stop_name = stop_name[0:25]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                entry = f"[{stop_name} **{end}**]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f"and more..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, 0, items, None, False, length, text,
+                max_len=26, extra=end
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
     elif not item_found and mon.name == "Stardust":
         for quest_reward_amount, quest_text, lat, lon, stop_name, stop_id in quests:
             found_rewards = True
@@ -375,25 +379,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"s{amount}"
             emote_img = f"{bot.config['mon_icon_repo']}reward/stardust/0.png"
-            if found_rewards:
-                if len(stop_name) >= 31:
-                    stop_name = stop_name[0:30]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                entry = f"[{stop_name} **{amount}**]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f"and more..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, 0, items, amount, False, length, text,
+                max_len=31
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
         for alternative_quest_reward_amount, alternative_quest_text, lat, lon, stop_name, stop_id in quests2:
             found_rewards = True
             amount = alternative_quest_reward_amount
@@ -401,25 +394,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"s{amount}"
             emote_img = f"{bot.config['mon_icon_repo']}reward/stardust/0.png"
-            if found_rewards:
-                if len(stop_name) >= 22:
-                    stop_name = stop_name[0:21]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                entry = f"[{stop_name} **{amount}-NO AR**]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f"lots more..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, 0, items, amount, False, length, text,
+                max_len=22, entry_suffix="-NO AR"
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
     elif reward.startswith("Showcase") or reward.startswith("showcase"):
         for lat, lon, stop_name, stop_id in quests:
             found_rewards = True
@@ -429,36 +411,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"e{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}misc/showcase.png"
-            if found_rewards:
-                if len(stop_name) >= 31:
-                    stop_name = stop_name[0:30]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                if item_id in items:
-                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
-                else:
-                    entry = f"[{stop_name}]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    if shiny:
-                        text = entry + text
-                        length = length + len(entry)
-                    else:
-                        theend = f" lots more ..."
-                        text = text + theend
-                        break
-                else:
-                    if shiny:
-                        text = entry + text
-                        length = length + len(entry)
-                    else:
-                        text = text + entry
-                        length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, item_id, items, None, False, length, text,
+                max_len=31
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
     elif reward.startswith("station") or reward.startswith("Power") or reward.startswith("Station") or reward.startswith("power"):
         for lat, lon, stop_name, expiration in quests:
             tstamp1 = datetime.fromtimestamp(expiration)
@@ -472,28 +432,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"e{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}misc/showcase.png"
-            if found_rewards:
-                if len(stop_name) >= 31:
-                    stop_name = stop_name[0:30]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                if item_id in items:
-                    entry = f"[{stop_name} **{left}**]({map_url})\n"
-                else:
-                    entry = f"[{stop_name} **{left}** Days Left]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f" lots more ..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, item_id, items, None, False, length, text,
+                max_len=31, extra=f"{left} Days Left"
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
     elif reward.startswith("grunt") or reward.startswith("giovan"):
         for lat, lon, stop_name, stop_id, expire, char_id in quests:
             found_rewards = True
@@ -503,28 +449,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"e{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}invasion/44.png"
-            if found_rewards:
-                if len(stop_name) >= 31:
-                    stop_name = stop_name[0:30]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                if item_id in items:
-                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
-                else:
-                    entry = f"[{stop_name}]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f" lots more ..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, item_id, items, None, False, length, text,
+                max_len=31
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
     elif reward.startswith("Sierra") or reward.startswith("sierra"):
         for lat, lon, stop_name, stop_id, expire, char_id in quests:
             found_rewards = True
@@ -534,28 +466,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"e{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}invasion/43.png"
-            if found_rewards:
-                if len(stop_name) >= 31:
-                    stop_name = stop_name[0:30]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                if item_id in items:
-                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
-                else:
-                    entry = f"[{stop_name}]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f" lots more ..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, item_id, items, None, False, length, text,
+                max_len=31
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
     elif reward.startswith("Arlo") or reward.startswith("arlo"):
         for lat, lon, stop_name, stop_id, expire, char_id in quests:
             found_rewards = True
@@ -565,28 +483,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"e{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}invasion/42.png"
-            if found_rewards:
-                if len(stop_name) >= 31:
-                    stop_name = stop_name[0:30]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                if item_id in items:
-                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
-                else:
-                    entry = f"[{stop_name}]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f" lots more ..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, item_id, items, None, False, length, text,
+                max_len=31
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
     elif reward.startswith("Cliff") or reward.startswith("cliff"):
         for lat, lon, stop_name, stop_id, expire, char_id in quests:
             found_rewards = True
@@ -596,28 +500,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"e{mon_id}"
             emote_img = f"{bot.config['mon_icon_repo']}invasion/41.png"
-            if found_rewards:
-                if len(stop_name) >= 31:
-                    stop_name = stop_name[0:30]
-                lat_list.append(lat)
-                lon_list.append(lon)
-
-                if bot.config['use_map']:
-                    map_url = bot.map_url.quest(lat, lon, stop_id)
-                else:
-                    map_url = f"https://www.google.com/maps/search/?api=1&query={lat},{lon}"
-
-                if item_id in items:
-                    entry = f"[{stop_name} **{amount}**]({map_url})\n"
-                else:
-                    entry = f"[{stop_name}]({map_url})\n"
-                if length + len(entry) >= 2400:
-                    theend = f" lots more ..."
-                    text = text + theend
-                    break
-                else:
-                    text = text + entry
-                    length = length + len(entry)
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, item_id, items, None, False, length, text,
+                max_len=31
+            )
+            lat_list.append(lat)
+            lon_list.append(lon)
+            if stop:
+                break
     elif reward.startswith("Lure") or reward.startswith("lure"):
         for lure_expire_timestamp, lure_id, lat, lon, stop_name in quests:
             tstamp1 = datetime.fromtimestamp(lure_expire_timestamp)
