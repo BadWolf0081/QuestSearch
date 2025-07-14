@@ -250,8 +250,8 @@ async def quest(ctx, areaname="", *, args=""):
             embed.title = f"{bot.items[item_id]['name']} {bot.locale['quests']} - {area[1]}"
             items.append(int(item_id))
             item_found = True
-            quests = await get_dataitem(area, item_id)
-            quests2 = await get_alt_dataitem(area, item_id)
+            quests = await get_dataitem(bot.config, area, item_id)
+            quests2 = await get_alt_dataitem(bot.config, area, item_id)
     if not item_found:
         mon = details(reward, bot.config['mon_icon_repo'], bot.config['language'])
         if reward.startswith("Mega") or reward.startswith("mega"):
