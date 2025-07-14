@@ -127,7 +127,7 @@ async def setup(bot):
                     found_form_id = 0  # For clarity, but not used for matching
                 elif use_normal:
                     normal_form_id = None
-                    # Try to find a form named "Normal" (case-insensitive) in the values
+                    # Search values for "Normal" (case-insensitive)
                     if str(pokedex_id) in forms_lang:
                         for fid, fname in forms_lang[str(pokedex_id)].items():
                             if fname.strip().lower() == "normal":
@@ -194,7 +194,7 @@ async def setup(bot):
                     found_form_id = 0  # For clarity, but not used for matching
                 elif use_normal:
                     normal_form_id = None
-                    # Try to find a form named "Normal" (case-insensitive) in the values
+                    # Search values for "Normal" (case-insensitive)
                     if str(pokedex_id) in forms_lang:
                         for fid, fname in forms_lang[str(pokedex_id)].items():
                             if fname.strip().lower() == "normal":
