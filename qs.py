@@ -1372,7 +1372,11 @@ def parse_mon_args(parts):
         mon_name = parts[0]
 
     return mon_name, form_query, shiny, mega
-
+bot.get_area = get_area
+bot.fuzzy_find_pokemon = fuzzy_find_pokemon
+bot.lookup_form_id_for_mon = lookup_form_id_for_mon
+bot.get_data = get_data
+bot.get_api_filecode = get_api_filecode
 async def main():
     for extension in extensions:
         await bot.load_extension(extension)
