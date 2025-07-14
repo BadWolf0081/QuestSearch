@@ -58,17 +58,18 @@ async def setup(bot):
             form_name = "Normal"
             icon_url = None
 
+            def search_icon_index(obj, filename):
+                if isinstance(obj, list):
+                    return filename in obj
+                elif isinstance(obj, dict):
+                    for v in obj.values():
+                        if search_icon_index(v, filename):
+                            return True
+                return False
+
             if use_normal:
                 # Only use base icon and only match quests with no form_id or form_id==0
                 icon_filename = f"{pokedex_id}.png"
-                def search_icon_index(obj, filename):
-                    if isinstance(obj, list):
-                        return filename in obj
-                    elif isinstance(obj, dict):
-                        for v in obj.values():
-                            if search_icon_index(v, filename):
-                                return True
-                    return False
                 if not search_icon_index(icon_index, icon_filename):
                     await ctx.send(f"No valid icon found for {pokemon_name} (Normal form)")
                     return
@@ -90,14 +91,6 @@ async def setup(bot):
                     if costume_ids:
                         found_costume_id = costume_ids[0]
                         icon_filename = f"{pokedex_id}_c{found_costume_id}.png"
-                        def search_icon_index(obj, filename):
-                            if isinstance(obj, list):
-                                return filename in obj
-                            elif isinstance(obj, dict):
-                                for v in obj.values():
-                                    if search_icon_index(v, filename):
-                                        return True
-                            return False
                         if not search_icon_index(icon_index, icon_filename):
                             icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{pokedex_id}_c{found_costume_id}.png"
                             found_form_id = None
@@ -116,7 +109,6 @@ async def setup(bot):
                 else:
                     use_costume = False
                     costume_id_for_match = None
-                # ...existing code...
                 if not search_icon_index(icon_index, icon_filename):
                     await ctx.send(f"No valid icon found for {pokemon_name} with form '{form_query}'")
                     return
