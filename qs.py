@@ -1430,7 +1430,10 @@ async def qform(ctx, areaname="", pokemon_name="", form_query=""):
         print(f"[QFORM ERROR] {e}")
         await ctx.send("Error processing your request.")
         
-if __name__ == "__main__":
+async def main():
     for extension in extensions:
-        bot.load_extension(extension)
-    bot.run(bot.config['bot_token'])
+        await bot.load_extension(extension)
+    await bot.start(bot.config['bot_token'])
+
+if __name__ == "__main__":
+    asyncio.run(main())
