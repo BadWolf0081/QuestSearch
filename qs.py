@@ -16,7 +16,7 @@ from util.mondetails import details
 import util.config
 import util.maps
 
-extensions = []
+extensions = ["qform"]
 
 activity = discord.Activity(type=discord.ActivityType.watching, name="Quest Bot: Online")
 intents = discord.Intents.default()
