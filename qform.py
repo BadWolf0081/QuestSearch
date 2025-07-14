@@ -296,72 +296,60 @@ async def setup(bot):
                         print(f"[QFORM ERROR] Static map failed: {e}")
                 print(f"[QFORM] Sent {len(entries)} results for {pokemon_name} ({form_name})")
             else:
-                # Show only the Pokémon icon, no placeholder image, if no quests found
-                embed = discord.Embed(
-                    title=f"{pokemon_name.title()} ({form_name}) Quests - {area[1]}",
-                    description=f"No quests found for {pokemon_name} with form '{form_name}' in {area[1]}",
-                    color=discord.Color.blue()
-                )
-                if icon_url:
-                    embed.set_thumbnail(url=icon_url)
-                # Do NOT set embed.set_image here!
-                await ctx.send(embed=embed)
+                # No quests found for the requested form, but maybe other forms exist in the data
+                # Collect all unique form_ids from the quest data for this Pokémon
+                available_form_ids = set()
+                for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
+                    try:
+                        quest_json_str = quest_json.strip()
+                        if quest_json_str.startswith("["):
+                            end_idx = quest_json_str.find("]") + 1
+                            quest_json_str = quest_json_str[:end_idx]
+                        elif quest_json_str.startswith("{"):
+                            end_idx = quest_json_str.find("}") + 1
+                            quest_json_str = quest_json_str[:end_idx]
+                        quest_list = json.loads(quest_json_str)
+                    except Exception:
+                        continue
+                    if not quest_list or not isinstance(quest_list, list):
+                        continue
+                    first = quest_list[0]
+                    if not isinstance(first, dict) or "info" not in first:
+                        continue
+                    quest_info = first["info"]
+                    q_form_id = quest_info.get("form_id", 0)
+                    if q_form_id is not None:
+                        available_form_ids.add(int(q_form_id))
+
+                # Remove 0 (Normal) if you want only special forms, or keep it to show all
+                # available_form_ids.discard(0)
+
+                # Map form IDs to names using forms_lang
+                available_forms = []
+                if str(pokedex_id) in forms_lang:
+                    for fid in available_form_ids:
+                        fname = forms_lang[str(pokedex_id)].get(str(fid), f"Form {fid}")
+                        available_forms.append(fname)
+                if available_forms:
+                    forms_list = "\n".join(f"- {fname}" for fname in available_forms)
+                    await ctx.send(
+                        embed=discord.Embed(
+                            title=f"No quests found for {pokemon_name.title()} with form '{form_name}' in {area[1]}",
+                            description=f"However, quests are available for these forms:\n{forms_list}",
+                            color=discord.Color.orange()
+                        )
+                    )
+                else:
+                    embed = discord.Embed(
+                        title=f"{pokemon_name.title()} ({form_name}) Quests - {area[1]}",
+                        description=f"No quests found for {pokemon_name} with form '{form_name}' in {area[1]}",
+                        color=discord.Color.blue()
+                    )
+                    if icon_url:
+                        embed.set_thumbnail(url=icon_url)
+                    await ctx.send(embed=embed)
         except Exception as e:
             await ctx.send(f"An error occurred: {str(e)}")
             print(f"[QFORM ERROR] {str(e)}")
 
     bot.command(name="qform")(qform)  # <-- Add this line to register the command
-
-    else:
-        # No quests found for the requested form, but maybe other forms exist in the data
-        # Collect all unique form_ids from the quest data for this Pokémon
-        available_form_ids = set()
-        for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
-            try:
-                quest_json_str = quest_json.strip()
-                if quest_json_str.startswith("["):
-                    end_idx = quest_json_str.find("]") + 1
-                    quest_json_str = quest_json_str[:end_idx]
-                elif quest_json_str.startswith("{"):
-                    end_idx = quest_json_str.find("}") + 1
-                    quest_json_str = quest_json_str[:end_idx]
-                quest_list = json.loads(quest_json_str)
-            except Exception:
-                continue
-            if not quest_list or not isinstance(quest_list, list):
-                continue
-            first = quest_list[0]
-            if not isinstance(first, dict) or "info" not in first:
-                continue
-            quest_info = first["info"]
-            q_form_id = quest_info.get("form_id", 0)
-            if q_form_id is not None:
-                available_form_ids.add(int(q_form_id))
-
-        # Remove 0 (Normal) if you want only special forms, or keep it to show all
-        # available_form_ids.discard(0)
-
-        # Map form IDs to names using forms_lang
-        available_forms = []
-        if str(pokedex_id) in forms_lang:
-            for fid in available_form_ids:
-                fname = forms_lang[str(pokedex_id)].get(str(fid), f"Form {fid}")
-                available_forms.append(fname)
-        if available_forms:
-            forms_list = "\n".join(f"- {fname}" for fname in available_forms)
-            await ctx.send(
-                embed=discord.Embed(
-                    title=f"No quests found for {pokemon_name.title()} with form '{form_name}' in {area[1]}",
-                    description=f"However, quests are available for these forms:\n{forms_list}",
-                    color=discord.Color.orange()
-                )
-            )
-        else:
-            embed = discord.Embed(
-                title=f"{pokemon_name.title()} ({form_name}) Quests - {area[1]}",
-                description=f"No quests found for {pokemon_name} with form '{form_name}' in {area[1]}",
-                color=discord.Color.blue()
-            )
-            if icon_url:
-                embed.set_thumbnail(url=icon_url)
-            await ctx.send(embed=embed)
