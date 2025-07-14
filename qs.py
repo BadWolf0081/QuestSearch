@@ -307,7 +307,7 @@ async def quest(ctx, areaname="", *, args=""):
         else:
             embed.title = f"{mon.name} {bot.locale['quests']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png")
-            quests = await get_data(area, mon.id)
+            quests = await get_data(bot.config, area, mon.id)
             quests2 = await get_alt_data(area, mon.id)
         mons.append(mon.id)
     
