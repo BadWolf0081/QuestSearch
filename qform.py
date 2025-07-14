@@ -261,7 +261,7 @@ async def setup(bot):
                             print(f"[QFORM DEBUG] Fallback to icon_filename: {fallback_icon_filename}")
                             if search_icon_index(icon_index, fallback_icon_filename):
                                 icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{fallback_icon_filename}"
-                                form_name = "Normal"
+                                form_name = None
                                 found_form_id = None
                             else:
                                 # No valid icon found for any form, so list available forms for this Pokémon
