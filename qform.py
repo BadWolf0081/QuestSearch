@@ -72,7 +72,6 @@ async def setup(bot):
                         break
                 # Fuzzy match if not exact
                 if not form_id_for_mon:
-                    import difflib
                     all_names = [fname.lower() for fname in forms_lang[str(pokedex_id)].values()]
                     close = difflib.get_close_matches(form_query.strip().lower(), all_names, n=1, cutoff=0.7)
                     if close:
