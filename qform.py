@@ -184,7 +184,7 @@ async def setup(bot):
                             lat_list.append(lat)
                             lon_list.append(lon)
                             # Use form-specific icon if available, but NOT for Normal (0)
-                            if form_id_for_mon and int(form_id_for_mon) != 0:
+                            if int(form_id_for_mon) != 0:
                                 mons_list.append((f"{pokedex_id}_f{form_id_for_mon}", lat, lon))
                             else:
                                 mons_list.append((str(pokedex_id), lat, lon))
@@ -194,16 +194,14 @@ async def setup(bot):
                             for stop_name, lat, lon, stop_id in stops:
                                 lat_list.append(lat)
                                 lon_list.append(lon)
-                                if fid and int(fid) != 0:
+                                if int(fid) != 0:
                                     mons_list.append((f"{pokedex_id}_f{fid}", lat, lon))
                                 else:
                                     mons_list.append((str(pokedex_id), lat, lon))
                     if lat_list and lon_list and mons_list:
-                        # Unpack mon_id, lat, lon for static_map.quest
-                        mon_ids, lats, lons = zip(*mons_list)
                         # static_map.quest expects lists for lat, lon, and mons
                         image = await bot.static_map.quest(
-                            list(lats), list(lons), [], [(mon_id, lat, lon) for mon_id, lat, lon in mons_list], bot.custom_emotes
+                            lat_list, lon_list, [], [(mon_id, lat, lon) for mon_id, lat, lon in mons_list], bot.custom_emotes
                         )
                         if image:
                             embed.set_image(url=image)
