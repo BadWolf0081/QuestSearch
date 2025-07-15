@@ -233,11 +233,10 @@ async def quest(ctx, areaname="", *, args=""):
 
     if item_found:
         length = 0
-        reward_items = list()
-        lat_list = list()
-        lon_list = list()
+        reward_items = []
+        lat_list = []
+        lon_list = []
         text = ""
-        # quests and quests2 are both lists of tuples: (quest_json, quest_template, lat, lon, stop_name, stop_id)
         for quest in quests:
             quest_json, quest_template, lat, lon, stop_name, stop_id = quest
             try:
@@ -248,9 +247,9 @@ async def quest(ctx, areaname="", *, args=""):
             except Exception:
                 continue
             if quest_item_id == int(item_id):
-                reward_items.append([quest_item_id, lat, lon])
+                reward_items.append([quest_item_id, lat, lon])  # <-- This is correct
                 text, length, stop = add_quest_entry(
-                    stop_name, lat, lon, stop_id, quest_item_id, items, amount, False, length, text,
+                    stop_name, lat, lon, stop_id, quest_item_id, [int(item_id)], amount, False, length, text,
                     max_len=31
                 )
                 lat_list.append(lat)
@@ -269,7 +268,7 @@ async def quest(ctx, areaname="", *, args=""):
             if quest_item_id == int(item_id):
                 reward_items.append([quest_item_id, lat, lon])
                 text, length, stop = add_quest_entry(
-                    stop_name, lat, lon, stop_id, quest_item_id, items, amount, False, length, text,
+                    stop_name, lat, lon, stop_id, quest_item_id, [int(item_id)], amount, False, length, text,
                     max_len=22, entry_suffix="-NO AR"
                 )
                 lat_list.append(lat)
@@ -279,7 +278,15 @@ async def quest(ctx, areaname="", *, args=""):
         embed.description = text or bot.locale["no_quests_found"]
         embed.set_footer(text=footer_text)
         embed.set_image(url="https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png")
-        await ctx.send(embed=embed)
+        message = await ctx.send(embed=embed)
+        # --- STATIC MAP FOR ITEMS ---
+        if bot.config['use_static'] and reward_items:
+            if bot.config['static_provider'] == "mapbox":
+                image = await bot.static_map.quest(lat_list, lon_list, reward_items, [], bot.custom_emotes)
+            elif bot.config['static_provider'] == "tileserver":
+                image = await bot.static_map.quest(lat_list, lon_list, reward_items, [], bot.custom_emotes)
+            embed.set_image(url=image)
+            await message.edit(embed=embed)
         return
 
     # ...rest of your Pokémon/other reward logic...
