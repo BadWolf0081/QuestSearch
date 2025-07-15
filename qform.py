@@ -123,11 +123,17 @@ async def setup(bot):
                 else:
                     # Form not found or no quests for this form, show available forms (but do NOT show all results)
                     available_forms = [f"{form_id_to_name[fid]} (ID: {fid})" for fid in forms_with_quests.keys()]
-                    await ctx.send(
-                        f"No quests found for {mon_name_found} ({form_query}) in {area[1]}.\n"
-                        f"Available forms with quests:\n" +
-                        ("\n".join(available_forms) if available_forms else "None")
-                    )
+                    if available_forms:
+                        embed = discord.Embed(
+                            title=f"Available forms for {mon_name_found.title()} in {area[1]}",
+                            description="\n".join(f"• {form_id_to_name[fid]} (ID: {fid})" for fid in forms_with_quests.keys()),
+                            color=discord.Color.orange()
+                        )
+                        await ctx.send(embed=embed)
+                    else:
+                        await ctx.send(
+                            f"No quests found for {mon_name_found} in {area[1]}.\nNo forms with quests available."
+                        )
                     return
             else:
                 # No form specified, check if base form (0) has quests
@@ -139,11 +145,17 @@ async def setup(bot):
                 else:
                     # No base form quests, show available forms as a list
                     available_forms = [f"{form_id_to_name[fid]} (ID: {fid})" for fid in forms_with_quests.keys()]
-                    await ctx.send(
-                        f"No quests found for {mon_name_found} (Basic) in {area[1]}.\n"
-                        f"Available forms with quests:\n" +
-                        ("\n".join(available_forms) if available_forms else "None")
-                    )
+                    if available_forms:
+                        embed = discord.Embed(
+                            title=f"Available forms for {mon_name_found.title()} in {area[1]}",
+                            description="\n".join(f"• {form_id_to_name[fid]} (ID: {fid})" for fid in forms_with_quests.keys()),
+                            color=discord.Color.orange()
+                        )
+                        await ctx.send(embed=embed)
+                    else:
+                        await ctx.send(
+                            f"No quests found for {mon_name_found} in {area[1]}.\nNo forms with quests available."
+                        )
                     return
 
             # Compose icon filename for the requested form (or default)
