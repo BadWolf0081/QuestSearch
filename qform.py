@@ -116,13 +116,13 @@ async def setup(bot):
                     if close:
                         form_id_for_mon = form_name_to_id[close[0]]
                         form_name = close[0]
+                # Only show this form's quests if available
                 if form_id_for_mon is not None and form_id_for_mon in forms_with_quests:
-                    # Show only this form's quests
                     for stop_name, lat, lon, stop_id in forms_with_quests[form_id_for_mon]:
                         entries.append(f"[{stop_name}]({bot.get_map_url(lat, lon, stop_id)})")
                     found = True
                 else:
-                    # Form not found or no quests for this form, show available forms
+                    # Form not found or no quests for this form, show available forms (but do NOT show all results)
                     available_forms = [form_id_to_name[fid] if fid in form_id_to_name else f"Form {fid}" for fid in forms_with_quests.keys()]
                     await ctx.send(
                         f"No quests found for {mon_name_found} ({form_query}) in {area[1]}.\n"
