@@ -910,4 +910,7 @@ if __name__ == "__main__":
         await bot.load_extension("util.extra_commands")
         await bot.start(bot.config['bot_token'])
 
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        print("Bot stopped.")
