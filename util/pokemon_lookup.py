@@ -3,11 +3,13 @@ import re
 import json
 
 def fuzzy_find_pokemon(query, poke_lookup):
-    names = [p["name"] for p in poke_lookup]
-    match = difflib.get_close_matches(query, names, n=1, cutoff=0.6)
+    # Normalize names: strip spaces and lowercase
+    names = [p["name"].strip().lower() for p in poke_lookup]
+    query_norm = query.strip().lower()
+    match = difflib.get_close_matches(query_norm, names, n=1, cutoff=0.6)
     if match:
         for p in poke_lookup:
-            if p["name"] == match[0]:
+            if p["name"].strip().lower() == match[0]:
                 return p
     return None
 
