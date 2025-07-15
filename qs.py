@@ -403,9 +403,9 @@ async def quest(ctx, areaname="", *, args=""):
             # Static map for Giovanni
             if bot.config['use_static'] and reward_mons:
                 if bot.config['static_provider'] == "mapbox":
-                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                    image = await bot.static_map.quest(lat_list, lon_list, 99944, reward_mons, bot.custom_emotes)
                 elif bot.config['static_provider'] == "tileserver":
-                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                    image = await bot.static_map.quest(lat_list, lon_list, 99944, reward_mons, bot.custom_emotes)
                 embed.set_image(url=image)
                 await message.edit(embed=embed)
             return
@@ -441,9 +441,9 @@ async def quest(ctx, areaname="", *, args=""):
             # Static map for Sierra
             if bot.config['use_static'] and reward_mons:
                 if bot.config['static_provider'] == "mapbox":
-                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                    image = await bot.static_map.quest(lat_list, lon_list, 99943, reward_mons, bot.custom_emotes)
                 elif bot.config['static_provider'] == "tileserver":
-                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                    image = await bot.static_map.quest(lat_list, lon_list, 99943, reward_mons, bot.custom_emotes)
                 embed.set_image(url=image)
                 await message.edit(embed=embed)
             return
@@ -479,9 +479,9 @@ async def quest(ctx, areaname="", *, args=""):
             # Static map for Arlo
             if bot.config['use_static'] and reward_mons:
                 if bot.config['static_provider'] == "mapbox":
-                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                    image = await bot.static_map.quest(lat_list, lon_list, 99942, reward_mons, bot.custom_emotes)
                 elif bot.config['static_provider'] == "tileserver":
-                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                    image = await bot.static_map.quest(lat_list, lon_list, 99942, reward_mons, bot.custom_emotes)
                 embed.set_image(url=image)
                 await message.edit(embed=embed)
             return
@@ -517,9 +517,9 @@ async def quest(ctx, areaname="", *, args=""):
             # Static map for Cliff
             if bot.config['use_static'] and reward_mons:
                 if bot.config['static_provider'] == "mapbox":
-                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                    image = await bot.static_map.quest(lat_list, lon_list, 99941, reward_mons, bot.custom_emotes)
                 elif bot.config['static_provider'] == "tileserver":
-                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                    image = await bot.static_map.quest(lat_list, lon_list, 99941, reward_mons, bot.custom_emotes)
                 embed.set_image(url=image)
                 await message.edit(embed=embed)
             return
