@@ -80,7 +80,7 @@ rows = re.findall(r"<tr>(.*?)</tr>", api_data, re.DOTALL)
 poke_lookup = []
 for row in rows:
     cols = re.findall(r"<td>(.*?)</td>", row, re.DOTALL)
-    if len(cols) >= 7:  # <-- was 6
+    if len(cols) >= 7:
         name = re.sub(r"<.*?>", "", cols[0]).strip()
         pokedex = re.sub(r"<.*?>", "", cols[1]).strip()
         form = re.sub(r"<.*?>", "", cols[2]).strip()
@@ -189,7 +189,6 @@ async def quest(ctx, areaname="", *, args=""):
         await ctx.send("Usage: !q <area> <reward> [pokemon]")
         return
 
-    # Improved parsing for 'mega' and similar
     if parts[0].lower() == "mega" and len(parts) > 1:
         reward = "mega"
         mon_name = " ".join(parts[1:])
@@ -247,7 +246,7 @@ async def quest(ctx, areaname="", *, args=""):
             except Exception:
                 continue
             if quest_item_id == int(item_id):
-                reward_items.append([quest_item_id, lat, lon])  # <-- This is correct
+                reward_items.append([quest_item_id, lat, lon])
                 text, length, stop = add_quest_entry(
                     stop_name, lat, lon, stop_id, quest_item_id, [int(item_id)], amount, False, length, text,
                     max_len=31
@@ -279,7 +278,6 @@ async def quest(ctx, areaname="", *, args=""):
         embed.set_footer(text=footer_text)
         embed.set_image(url="https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png")
         message = await ctx.send(embed=embed)
-        # --- STATIC MAP FOR ITEMS ---
         if bot.config['use_static'] and reward_items:
             if bot.config['static_provider'] == "mapbox":
                 image = await bot.static_map.quest(lat_list, lon_list, reward_items, [], bot.custom_emotes)
@@ -289,10 +287,7 @@ async def quest(ctx, areaname="", *, args=""):
             await message.edit(embed=embed)
         return
 
-    # ...rest of your Pokémon/other reward logic...
-
     if not item_found:
-        # Use mon_name if present, otherwise fallback to reward
         mon_query = mon_name if mon_name else reward
         mon = details(mon_query, bot.config['mon_icon_repo'], bot.config['language'])
         reward_lower = reward.lower()
@@ -317,12 +312,11 @@ async def quest(ctx, areaname="", *, args=""):
                     quest_data = json.loads(quest_json)
                     info = quest_data[0]["info"]
                     quest_pokemon_id = info.get("pokemon_id")
-                    amount = info.get("amount")  # <-- This is the Mega Energy amount
+                    amount = info.get("amount")
                 except Exception:
                     continue
                 if quest_pokemon_id == mon.id:
                     reward_mons.append([quest_pokemon_id, lat, lon])
-                    # Show amount in the entry
                     text, length, stop = add_quest_entry(
                         stop_name, lat, lon, stop_id, quest_pokemon_id, [mon.id], amount, False, length, text,
                         max_len=31
@@ -354,7 +348,6 @@ async def quest(ctx, areaname="", *, args=""):
             embed.set_footer(text=footer_text)
             embed.set_image(url="https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png")
             message = await ctx.send(embed=embed)
-            # --- STATIC MAP FOR MEGA ENERGY ---
             if bot.config['use_static'] and reward_mons:
                 if bot.config['static_provider'] == "mapbox":
                     image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
@@ -465,10 +458,14 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"s{amount}"
             emote_img = f"{bot.config['mon_icon_repo']}reward/stardust/0.png"
-            text, length, stop = add_quest_entry(
-                stop_name, lat, lon, stop_id, 0, items, amount, False, length, text,
-                max_len=31
-            )
+            # Always show amount for Stardust
+            entry = f"[{truncate_stop_name(stop_name, 31)} **{amount}**]({get_map_url(lat, lon, stop_id)})\n"
+            if length + len(entry) >= 2400:
+                text = text + " lots more ..."
+                break
+            else:
+                text = text + entry
+                length += len(entry)
             lat_list.append(lat)
             lon_list.append(lon)
             if stop:
@@ -480,10 +477,13 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"s{amount}"
             emote_img = f"{bot.config['mon_icon_repo']}reward/stardust/0.png"
-            text, length, stop = add_quest_entry(
-                stop_name, lat, lon, stop_id, 0, items, amount, False, length, text,
-                max_len=22, entry_suffix="-NO AR"
-            )
+            entry = f"[{truncate_stop_name(stop_name, 22)} **{amount}-NO AR**]({get_map_url(lat, lon, stop_id)})\n"
+            if length + len(entry) >= 2400:
+                text = text + " lots more ..."
+                break
+            else:
+                text = text + entry
+                length += len(entry)
             lat_list.append(lat)
             lon_list.append(lon)
             if stop:
