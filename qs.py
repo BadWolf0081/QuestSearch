@@ -306,6 +306,63 @@ async def quest(ctx, areaname="", *, args=""):
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/mega_resource/{str(mon.id)}.png")
             quests = await get_datamega(bot.config, area)
             quests2 = await get_alt_datamega(bot.config, area)
+            length = 0
+            reward_mons = []
+            lat_list = []
+            lon_list = []
+            text = ""
+            for quest in quests:
+                quest_json, quest_template, lat, lon, stop_name, stop_id = quest
+                try:
+                    quest_data = json.loads(quest_json)
+                    info = quest_data[0]["info"]
+                    quest_pokemon_id = info.get("pokemon_id")
+                    amount = info.get("amount")  # <-- This is the Mega Energy amount
+                except Exception:
+                    continue
+                if quest_pokemon_id == mon.id:
+                    reward_mons.append([quest_pokemon_id, lat, lon])
+                    # Show amount in the entry
+                    text, length, stop = add_quest_entry(
+                        stop_name, lat, lon, stop_id, quest_pokemon_id, [mon.id], amount, False, length, text,
+                        max_len=31
+                    )
+                    lat_list.append(lat)
+                    lon_list.append(lon)
+                    if stop:
+                        break
+            for quest in quests2:
+                quest_json, quest_template, lat, lon, stop_name, stop_id = quest
+                try:
+                    quest_data = json.loads(quest_json)
+                    info = quest_data[0]["info"]
+                    quest_pokemon_id = info.get("pokemon_id")
+                    amount = info.get("amount")
+                except Exception:
+                    continue
+                if quest_pokemon_id == mon.id:
+                    reward_mons.append([quest_pokemon_id, lat, lon])
+                    text, length, stop = add_quest_entry(
+                        stop_name, lat, lon, stop_id, quest_pokemon_id, [mon.id], amount, False, length, text,
+                        max_len=22, entry_suffix="-NO AR"
+                    )
+                    lat_list.append(lat)
+                    lon_list.append(lon)
+                    if stop:
+                        break
+            embed.description = text or bot.locale["no_quests_found"]
+            embed.set_footer(text=footer_text)
+            embed.set_image(url="https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png")
+            message = await ctx.send(embed=embed)
+            # --- STATIC MAP FOR MEGA ENERGY ---
+            if bot.config['use_static'] and reward_mons:
+                if bot.config['static_provider'] == "mapbox":
+                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                elif bot.config['static_provider'] == "tileserver":
+                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                embed.set_image(url=image)
+                await message.edit(embed=embed)
+            return
         elif reward_lower.startswith("showcase"):
             embed.title = f"{mon.name} {bot.locale['showcase']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/showcase.png")
