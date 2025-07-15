@@ -179,6 +179,9 @@ def add_quest_entry(
         length += len(entry)
         return text, length, False
 
+def normalize_item_name(name):
+    return re.sub(r'[^a-z0-9]', '', name.lower())
+
 @bot.command(pass_context=True, aliases=bot.config['quest_aliases'])
 async def quest(ctx, areaname="", *, args=""):
     parts = args.strip().split()
@@ -210,26 +213,26 @@ async def quest(ctx, areaname="", *, args=""):
     items = list()
     mons = list()
     item_found = False
-    for item_id in bot.items:
-        if area[1] == "Unknown Area":
+    user_item = normalize_item_name(reward)
+    for item_id, item in bot.items.items():
+        item_name_norm = normalize_item_name(item["name"])
+        if area[1] == bot.locale['unknown']:
             footer_text = area[1]
             loading = f"{footer_text}"
             embed.description = bot.locale["no_area_found"]
             item_found = True
-        elif bot.items[item_id]["name"].lower() == reward.lower():
+            break
+        elif item_name_norm == user_item:
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png")
-            embed.title = f"{bot.items[item_id]['name']} {bot.locale['quests']} - {area[1]}"
+            embed.title = f"{item['name']} {bot.locale['quests']} - {area[1]}"
             items.append(int(item_id))
             item_found = True
             quests = await get_dataitem(bot.config, area, item_id)
             quests2 = await get_alt_dataitem(bot.config, area, item_id)
-            # --- ADD THIS RETURN ---
             break
 
     if item_found:
         # --- HANDLE ITEM QUESTS HERE ---
-        # (add your code to process and display item quests, similar to how you do for Pokémon)
-        # For example:
         length = 0
         reward_items = list()
         lat_list = list()
