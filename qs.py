@@ -368,6 +368,47 @@ async def quest(ctx, areaname="", *, args=""):
             embed.title = f"{bot.locale['active_lures']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokestop/501.png")
             quests = await get_lures(bot.config, area)
+            length = 0
+            reward_mons = []
+            lat_list = []
+            lon_list = []
+            text = ""
+            for lure_expire_timestamp, lure_id, lat, lon, stop_name in quests:
+                tstamp1 = datetime.fromtimestamp(lure_expire_timestamp)
+                tstamp2 = datetime.now()
+                td = tstamp1 - tstamp2
+                left = int(round(td.total_seconds() / 60))
+                luretype = {
+                    501: "Normal",
+                    502: "Glacial",
+                    503: "Mossy",
+                    504: "Magnetic",
+                    505: "Rainy",
+                    506: "Golden"
+                }.get(lure_id, f"Type {lure_id}")
+                reward_mons.append([lure_id, lat, lon])
+                entry = f"[{truncate_stop_name(stop_name, 31)} - {luretype} - {left} Min]({get_map_url(lat, lon)})\n"
+                if length + len(entry) >= 2400:
+                    text = text + " lots more ..."
+                    break
+                else:
+                    text = text + entry
+                    length += len(entry)
+                lat_list.append(lat)
+                lon_list.append(lon)
+            embed.description = text or bot.locale["no_quests_found"]
+            embed.set_footer(text=footer_text)
+            embed.set_image(url="https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png")
+            message = await ctx.send(embed=embed)
+            # Static map for lures
+            if bot.config['use_static'] and reward_mons:
+                if bot.config['static_provider'] == "mapbox":
+                    image = await bot.static_map.quest(lat_list, lon_list, 99993, reward_mons, bot.custom_emotes)
+                elif bot.config['static_provider'] == "tileserver":
+                    image = await bot.static_map.quest(lat_list, lon_list, 99993, reward_mons, bot.custom_emotes)
+                embed.set_image(url=image)
+                await message.edit(embed=embed)
+            return
         elif reward_lower.startswith("route"):
             embed.title = f"{bot.locale['routes']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}misc/route-start.png")
