@@ -1047,6 +1047,7 @@ async def quest(ctx, areaname="", *, args=""):
         await ctx.send(embed=embed)
     
 bot.get_area = get_area
+bot.get_map_url = get_map_url
 bot.poke_lookup = poke_lookup
 bot.lookup_form_id_for_mon = lambda mon_id, form_query: lookup_form_id_for_mon(mon_id, form_query, poke_lookup)
 bot.lookup_costume_id_for_mon = lambda mon_id, costume_query: lookup_costume_id_for_mon(mon_id, costume_query, poke_lookup)
