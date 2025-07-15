@@ -70,15 +70,6 @@ async def setup(bot):
             with open("data/forms/index.json", encoding="utf-8") as f:
                 icon_index = json.load(f)
 
-            # Build a mapping of form_id -> form_name for this Pokémon (from forms_with_quests only)
-            form_id_to_name = {}
-            form_name_to_id = {}
-            for fid in forms_with_quests.keys():
-                # Try to get a readable name from formsen.json, fallback to "Form {fid}"
-                form_name = formsen.get(f"form_{fid}", f"Form {fid}")
-                form_id_to_name[fid] = form_name
-                form_name_to_id[form_name.lower()] = fid
-
             # Query for quests with this Pokémon (all forms)
             quests = await bot.get_data(bot.config, area, pokedex_id)
             found = False
@@ -101,6 +92,14 @@ async def setup(bot):
                 if q_form_id not in forms_with_quests:
                     forms_with_quests[q_form_id] = []
                 forms_with_quests[q_form_id].append((stop_name, lat, lon, stop_id))
+
+            # Now build the mapping of form_id <-> form_name for only available forms
+            form_id_to_name = {}
+            form_name_to_id = {}
+            for fid in forms_with_quests.keys():
+                form_name = formsen.get(f"form_{fid}", f"Form {fid}")
+                form_id_to_name[fid] = form_name
+                form_name_to_id[form_name.lower()] = fid
 
             # Fuzzy form name lookup (if requested)
             form_id_for_mon = None
