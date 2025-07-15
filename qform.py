@@ -130,12 +130,24 @@ async def setup(bot):
                     )
                     return
             else:
-                # No form specified, show all forms with quests
-                for fid, stops in forms_with_quests.items():
-                    form_disp = form_id_to_name.get(fid, f"Form {fid}")
-                    for stop_name, lat, lon, stop_id in stops:
-                        entries.append(f"[{stop_name} **{form_disp}**]({bot.get_map_url(lat, lon, stop_id)})")
-                        found = True
+                # No form specified, check if base form (0) has quests
+                if 0 in forms_with_quests:
+                    # Show only base form quests
+                    for stop_name, lat, lon, stop_id in forms_with_quests[0]:
+                        entries.append(f"[{stop_name}]({bot.get_map_url(lat, lon, stop_id)})")
+                    found = True
+                else:
+                    # No base form quests, show available forms as a list
+                    available_forms = []
+                    for fid in forms_with_quests.keys():
+                        form_disp = form_id_to_name.get(fid, f"Form {fid}")
+                        available_forms.append(f"{form_disp} (ID: {fid})")
+                    await ctx.send(
+                        f"No quests found for {mon_name_found} (Normal) in {area[1]}.\n"
+                        f"Available forms with quests:\n" +
+                        ("\n".join(available_forms) if available_forms else "None")
+                    )
+                    return
 
             # Compose icon filename for the requested form (or default)
             icon_form_id = form_id_for_mon if form_id_for_mon is not None else 0
