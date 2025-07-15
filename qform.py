@@ -184,20 +184,20 @@ async def setup(bot):
                             lat_list.append(lat)
                             lon_list.append(lon)
                             # Use form-specific icon if available, but NOT for Normal (0)
-                            if int(form_id_for_mon) != 0:
-                                mons_list.append((f"{pokedex_id}_f{form_id_for_mon}", lat, lon))
-                            else:
+                            if int(form_id_for_mon) == 0:
                                 mons_list.append((str(pokedex_id), lat, lon))
+                            else:
+                                mons_list.append((f"{pokedex_id}_f{form_id_for_mon}", lat, lon))
                     else:
                         # All forms
                         for fid, stops in forms_with_quests.items():
                             for stop_name, lat, lon, stop_id in stops:
                                 lat_list.append(lat)
                                 lon_list.append(lon)
-                                if int(fid) != 0:
-                                    mons_list.append((f"{pokedex_id}_f{fid}", lat, lon))
-                                else:
+                                if int(fid) == 0:
                                     mons_list.append((str(pokedex_id), lat, lon))
+                                else:
+                                    mons_list.append((f"{pokedex_id}_f{fid}", lat, lon))
                     if lat_list and lon_list and mons_list:
                         # static_map.quest expects lists for lat, lon, and mons
                         image = await bot.static_map.quest(
