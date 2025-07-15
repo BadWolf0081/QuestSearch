@@ -380,6 +380,11 @@ async def quest(ctx, areaname="", *, args=""):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/43.png")
             quests = await get_dataleaders(bot.config, area, 43)
+            length = 0
+            reward_mons = []
+            lat_list = []
+            lon_list = []
+            text = ""
             for lat, lon, stop_name, stop_id, expiration, character in quests:
                 found_rewards = True
                 mon_id = 99943
@@ -388,14 +393,26 @@ async def quest(ctx, areaname="", *, args=""):
                 emote_img = f"{bot.config['mon_icon_repo']}invasion/43.png"
                 end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
                 text, length, stop = add_quest_entry(
-                    stop_name, lat, lon, stop_id, 0, items, None, False, length, text,
+                    stop_name, lat, lon, stop_id, 0, [], None, False, length, text,
                     max_len=26, extra=end
                 )
                 lat_list.append(lat)
                 lon_list.append(lon)
                 if stop:
                     break
-
+            embed.description = text or bot.locale["no_quests_found"]
+            embed.set_footer(text=footer_text)
+            embed.set_image(url="https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png")
+            message = await ctx.send(embed=embed)
+            # Static map for leaders
+            if bot.config['use_static'] and reward_mons:
+                if bot.config['static_provider'] == "mapbox":
+                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                elif bot.config['static_provider'] == "tileserver":
+                    image = await bot.static_map.quest(lat_list, lon_list, [], reward_mons, bot.custom_emotes)
+                embed.set_image(url=image)
+                await message.edit(embed=embed)
+            return
         elif reward_lower.startswith("arlo"):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/42.png")
