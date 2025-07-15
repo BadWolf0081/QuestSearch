@@ -223,6 +223,30 @@ async def quest(ctx, areaname="", *, args=""):
             item_found = True
             quests = await get_dataitem(bot.config, area, item_id)
             quests2 = await get_alt_dataitem(bot.config, area, item_id)
+            # --- ADD THIS RETURN ---
+            break
+
+    if item_found:
+        # --- HANDLE ITEM QUESTS HERE ---
+        # (add your code to process and display item quests, similar to how you do for Pokémon)
+        # For example:
+        length = 0
+        reward_items = list()
+        lat_list = list()
+        lon_list = list()
+        text = ""
+        for quest in quests:
+            # Unpack quest fields as needed
+            # Add to text, lat_list, lon_list, etc.
+            pass
+        embed.description = text or bot.locale["no_quests_found"]
+        embed.set_footer(text=footer_text)
+        embed.set_image(url="https://raw.githubusercontent.com/ccev/dp_emotes/master/blank.png")
+        await ctx.send(embed=embed)
+        return  # <--- EXIT THE COMMAND AFTER HANDLING ITEM
+
+    # ...rest of your Pokémon/other reward logic...
+
     if not item_found:
         # Use mon_name if present, otherwise fallback to reward
         mon_query = mon_name if mon_name else reward
