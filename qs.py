@@ -389,7 +389,7 @@ async def quest(ctx, areaname="", *, args=""):
                     505: "Rainy",
                     506: "Golden"
                 }.get(lure_id, f"Type {lure_id}")
-                reward_mons.append([lure_id, lat, lon])
+                reward_mons.append([0, lat, lon, lure_id])  # 0 as mon_id, add lure_id for static_map
                 entry = f"[{truncate_stop_name(stop_name, 31)} - {luretype} - {left} Min]({get_map_url(lat, lon)})\n"
                 if length + len(entry) >= 2400:
                     text = text + " lots more ..."
