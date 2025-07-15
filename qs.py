@@ -182,8 +182,17 @@ def add_quest_entry(
 @bot.command(pass_context=True, aliases=bot.config['quest_aliases'])
 async def quest(ctx, areaname="", *, args=""):
     parts = args.strip().split()
-    reward = parts[0] if parts else ""
-    formcostume = parts[1] if len(parts) > 1 else None
+    if not parts:
+        await ctx.send("Usage: !q <area> <reward> [pokemon]")
+        return
+
+    # Improved parsing for 'mega' and similar
+    if parts[0].lower() == "mega" and len(parts) > 1:
+        reward = "mega"
+        mon_name = " ".join(parts[1:])
+    else:
+        reward = parts[0]
+        mon_name = " ".join(parts[1:]) if len(parts) > 1 else ""
 
     footer_text = ""
     text = ""
@@ -196,7 +205,7 @@ async def quest(ctx, areaname="", *, args=""):
         footer_text = area[1]
         loading = f"{loading} • {footer_text}"
 
-    print(f"@{ctx.author.name} requested {reward} quests for area {area[1]}")
+    print(f"@{ctx.author.name} requested {reward} {mon_name} quests for area {area[1]}")
 
     items = list()
     mons = list()
@@ -215,7 +224,9 @@ async def quest(ctx, areaname="", *, args=""):
             quests = await get_dataitem(bot.config, area, item_id)
             quests2 = await get_alt_dataitem(bot.config, area, item_id)
     if not item_found:
-        mon = details(reward, bot.config['mon_icon_repo'], bot.config['language'])
+        # Use mon_name if present, otherwise fallback to reward
+        mon_query = mon_name if mon_name else reward
+        mon = details(mon_query, bot.config['mon_icon_repo'], bot.config['language'])
         reward_lower = reward.lower()
 
         def add_lat_lon(lat, lon):
