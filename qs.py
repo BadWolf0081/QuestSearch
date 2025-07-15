@@ -458,14 +458,11 @@ async def quest(ctx, areaname="", *, args=""):
             reward_mons.append([mon_id, lat, lon])
             emote_name = f"s{amount}"
             emote_img = f"{bot.config['mon_icon_repo']}reward/stardust/0.png"
-            # Always show amount for Stardust
-            entry = f"[{truncate_stop_name(stop_name, 31)} **{amount}**]({get_map_url(lat, lon, stop_id)})\n"
-            if length + len(entry) >= 2400:
-                text = text + " lots more ..."
-                break
-            else:
-                text = text + entry
-                length += len(entry)
+            # Use add_quest_entry to get stop value
+            text, length, stop = add_quest_entry(
+                stop_name, lat, lon, stop_id, 0, [0], amount, False, length, text,
+                max_len=31
+            )
             lat_list.append(lat)
             lon_list.append(lon)
             if stop:
