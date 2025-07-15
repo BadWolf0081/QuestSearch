@@ -213,6 +213,9 @@ async def quest(ctx, areaname="", *, args=""):
     mons = list()
     item_found = False
     user_item = normalize_item_name(reward)
+    quests = []
+    quests2 = []
+
     for item_id, item in bot.items.items():
         item_name_norm = normalize_item_name(item["name"])
         if area[1] == bot.locale['unknown']:
