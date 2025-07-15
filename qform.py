@@ -46,6 +46,8 @@ async def setup(bot):
                 return []
 
             # --- 2. Fuzzy Pokémon name lookup using qs.py logic ---
+            print(f"[QFORM DEBUG] pokemon_name='{pokemon_name}'")
+            print(f"[QFORM DEBUG] poke_lookup sample: {[p['name'] for p in bot.poke_lookup if 'rockruff' in p['name'].lower()]}")
             pokemon_entry = bot.fuzzy_find_pokemon(pokemon_name)
             if not pokemon_entry:
                 await ctx.send(f"Could not find Pokémon: {pokemon_name}")
