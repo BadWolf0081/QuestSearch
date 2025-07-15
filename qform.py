@@ -140,7 +140,7 @@ async def setup(bot):
                     # No base form quests, show available forms as a list
                     available_forms = [f"{form_id_to_name[fid]} (ID: {fid})" for fid in forms_with_quests.keys()]
                     await ctx.send(
-                        f"No quests found for {mon_name_found} (Normal) in {area[1]}.\n"
+                        f"No quests found for {mon_name_found} (Basic) in {area[1]}.\n"
                         f"Available forms with quests:\n" +
                         ("\n".join(available_forms) if available_forms else "None")
                     )
