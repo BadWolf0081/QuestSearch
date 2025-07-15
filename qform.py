@@ -162,7 +162,43 @@ async def setup(bot):
                 placeholder_img = "https://mir-s3-cdn-cf.behance.net/project_modules/disp/c3c4d331234507.564a1d23db8f9.gif"
                 embed.set_image(url=placeholder_img)
                 msg = await ctx.send(embed=embed)
-                print(f"[QFORM] Sent {len(entries)} results for {mon_name_found} ({form_name})")
+
+                # --- Static map support ---
+                if getattr(bot, "static_map", None) and bot.config.get("use_static"):
+                    lat_list = []
+                    lon_list = []
+                    mons_list = []
+                    # For each quest entry, collect lat/lon and mon_id (with form if possible)
+                    if form_id_for_mon is not None:
+                        # Only one form requested
+                        for stop_name, lat, lon, stop_id in forms_with_quests.get(form_id_for_mon, []):
+                            lat_list.append(lat)
+                            lon_list.append(lon)
+                            # Use form-specific icon if available
+                            if form_id_for_mon and int(form_id_for_mon) != 0:
+                                mons_list.append((f"{pokedex_id}_f{form_id_for_mon}", lat, lon))
+                            else:
+                                mons_list.append((pokedex_id, lat, lon))
+                    else:
+                        # All forms
+                        for fid, stops in forms_with_quests.items():
+                            for stop_name, lat, lon, stop_id in stops:
+                                lat_list.append(lat)
+                                lon_list.append(lon)
+                                if fid and int(fid) != 0:
+                                    mons_list.append((f"{pokedex_id}_f{fid}", lat, lon))
+                                else:
+                                    mons_list.append((pokedex_id, lat, lon))
+                    if lat_list and lon_list and mons_list:
+                        # Unpack mon_id, lat, lon for static_map.quest
+                        mon_ids, lats, lons = zip(*mons_list)
+                        # static_map.quest expects lists for lat, lon, and mons
+                        image = await bot.static_map.quest(
+                            list(lats), list(lons), [], [(mon_id, lat, lon) for mon_id, lat, lon in mons_list], bot.custom_emotes
+                        )
+                        if image:
+                            embed.set_image(url=image)
+                            await msg.edit(embed=embed)
             else:
                 await ctx.send(f"No quests found for {mon_name_found} ({form_name if form_name else 'All Forms'}) in {area[1]}.")
 
