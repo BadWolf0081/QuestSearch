@@ -147,11 +147,14 @@ async def setup(bot):
                     return
 
             # Compose icon filename for the requested form (or default)
+            def is_normal_form(fid):
+                return (fid == 0) or (form_id_to_name.get(fid, "").lower() == "normal")
+
             icon_form_id = form_id_for_mon if form_id_for_mon is not None else 0
-            if icon_form_id and int(icon_form_id) != 0:
-                icon_filename = f"{pokedex_id}_f{icon_form_id}.png"
-            else:
+            if is_normal_form(icon_form_id):
                 icon_filename = f"{pokedex_id}.png"
+            else:
+                icon_filename = f"{pokedex_id}_f{icon_form_id}.png"
             print(f"[QFORM DEBUG] Using icon_filename: {icon_filename}")
 
             # Check if icon exists
@@ -178,13 +181,16 @@ async def setup(bot):
                     lon_list = []
                     mons_list = []
                     # For each quest entry, collect lat/lon and mon_id (with form if possible)
+                    def is_normal_form(fid):
+                        # Treat as Normal if form name is "Normal" or fid == 0
+                        return (fid == 0) or (form_id_to_name.get(fid, "").lower() == "normal")
+
                     if form_id_for_mon is not None:
                         # Only one form requested
                         for stop_name, lat, lon, stop_id in forms_with_quests.get(form_id_for_mon, []):
                             lat_list.append(lat)
                             lon_list.append(lon)
-                            # Use form-specific icon if available, but NOT for Normal (0)
-                            if int(form_id_for_mon) == 0:
+                            if is_normal_form(form_id_for_mon):
                                 mons_list.append((str(pokedex_id), lat, lon))
                             else:
                                 mons_list.append((f"{pokedex_id}_f{form_id_for_mon}", lat, lon))
@@ -194,12 +200,11 @@ async def setup(bot):
                             for stop_name, lat, lon, stop_id in stops:
                                 lat_list.append(lat)
                                 lon_list.append(lon)
-                                if int(fid) == 0:
+                                if is_normal_form(fid):
                                     mons_list.append((str(pokedex_id), lat, lon))
                                 else:
                                     mons_list.append((f"{pokedex_id}_f{fid}", lat, lon))
                     if lat_list and lon_list and mons_list:
-                        # static_map.quest expects lists for lat, lon, and mons
                         image = await bot.static_map.quest(
                             lat_list, lon_list, [], [(mon_id, lat, lon) for mon_id, lat, lon in mons_list], bot.custom_emotes
                         )
