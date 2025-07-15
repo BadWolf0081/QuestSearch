@@ -70,14 +70,14 @@ async def setup(bot):
             with open("data/forms/index.json", encoding="utf-8") as f:
                 icon_index = json.load(f)
 
-            # Build a mapping of form_id -> form_name for this Pokémon
+            # Build a mapping of form_id -> form_name for this Pokémon (from forms_with_quests only)
             form_id_to_name = {}
             form_name_to_id = {}
-            for k, v in formsen.items():
-                if k.startswith("form_"):
-                    fid = int(k.replace("form_", ""))
-                    form_id_to_name[fid] = v
-                    form_name_to_id[v.lower()] = fid
+            for fid in forms_with_quests.keys():
+                # Try to get a readable name from formsen.json, fallback to "Form {fid}"
+                form_name = formsen.get(f"form_{fid}", f"Form {fid}")
+                form_id_to_name[fid] = form_name
+                form_name_to_id[form_name.lower()] = fid
 
             # Query for quests with this Pokémon (all forms)
             quests = await bot.get_data(bot.config, area, pokedex_id)
@@ -106,16 +106,16 @@ async def setup(bot):
             form_id_for_mon = None
             form_name = None
             if form_query:
-                # Try exact match
+                # Try exact match among available forms
                 if form_query.lower() in form_name_to_id:
                     form_id_for_mon = form_name_to_id[form_query.lower()]
-                    form_name = form_query
+                    form_name = form_id_to_name[form_id_for_mon]
                 else:
-                    # Fuzzy match
+                    # Fuzzy match among available forms
                     close = difflib.get_close_matches(form_query.lower(), list(form_name_to_id.keys()), n=1, cutoff=0.7)
                     if close:
                         form_id_for_mon = form_name_to_id[close[0]]
-                        form_name = close[0]
+                        form_name = form_id_to_name[form_id_for_mon]
                 # Only show this form's quests if available
                 if form_id_for_mon is not None and form_id_for_mon in forms_with_quests:
                     for stop_name, lat, lon, stop_id in forms_with_quests[form_id_for_mon]:
@@ -123,10 +123,11 @@ async def setup(bot):
                     found = True
                 else:
                     # Form not found or no quests for this form, show available forms (but do NOT show all results)
-                    available_forms = [form_id_to_name[fid] if fid in form_id_to_name else f"Form {fid}" for fid in forms_with_quests.keys()]
+                    available_forms = [f"{form_id_to_name[fid]} (ID: {fid})" for fid in forms_with_quests.keys()]
                     await ctx.send(
                         f"No quests found for {mon_name_found} ({form_query}) in {area[1]}.\n"
-                        f"Available forms with quests: {', '.join(available_forms) if available_forms else 'None'}"
+                        f"Available forms with quests:\n" +
+                        ("\n".join(available_forms) if available_forms else "None")
                     )
                     return
             else:
@@ -138,10 +139,7 @@ async def setup(bot):
                     found = True
                 else:
                     # No base form quests, show available forms as a list
-                    available_forms = []
-                    for fid in forms_with_quests.keys():
-                        form_disp = form_id_to_name.get(fid, f"Form {fid}")
-                        available_forms.append(f"{form_disp} (ID: {fid})")
+                    available_forms = [f"{form_id_to_name[fid]} (ID: {fid})" for fid in forms_with_quests.keys()]
                     await ctx.send(
                         f"No quests found for {mon_name_found} (Normal) in {area[1]}.\n"
                         f"Available forms with quests:\n" +
