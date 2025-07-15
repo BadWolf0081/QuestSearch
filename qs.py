@@ -380,14 +380,61 @@ async def quest(ctx, areaname="", *, args=""):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/43.png")
             quests = await get_dataleaders(bot.config, area, 43)
+            for lat, lon, stop_name, stop_id, expiration, character in quests:
+                found_rewards = True
+                mon_id = 99943
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"r{mon_id}"
+                emote_img = f"{bot.config['mon_icon_repo']}invasion/43.png"
+                end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
+                text, length, stop = add_quest_entry(
+                    stop_name, lat, lon, stop_id, 0, items, None, False, length, text,
+                    max_len=26, extra=end
+                )
+                lat_list.append(lat)
+                lon_list.append(lon)
+                if stop:
+                    break
+
         elif reward_lower.startswith("arlo"):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/42.png")
             quests = await get_dataleaders(bot.config, area, 42)
+            for lat, lon, stop_name, stop_id, expiration, character in quests:
+                found_rewards = True
+                mon_id = 99942
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"r{mon_id}"
+                emote_img = f"{bot.config['mon_icon_repo']}invasion/42.png"
+                end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
+                text, length, stop = add_quest_entry(
+                    stop_name, lat, lon, stop_id, 0, items, None, False, length, text,
+                    max_len=26, extra=end
+                )
+                lat_list.append(lat)
+                lon_list.append(lon)
+                if stop:
+                    break
+
         elif reward_lower.startswith("cliff"):
             embed.title = f"{bot.locale['leaders']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}invasion/41.png")
             quests = await get_dataleaders(bot.config, area, 41)
+            for lat, lon, stop_name, stop_id, expiration, character in quests:
+                found_rewards = True
+                mon_id = 99941
+                reward_mons.append([mon_id, lat, lon])
+                emote_name = f"r{mon_id}"
+                emote_img = f"{bot.config['mon_icon_repo']}invasion/41.png"
+                end = datetime.fromtimestamp(expiration).strftime(bot.locale['time_format_hm'])
+                text, length, stop = add_quest_entry(
+                    stop_name, lat, lon, stop_id, 0, items, None, False, length, text,
+                    max_len=26, extra=end
+                )
+                lat_list.append(lat)
+                lon_list.append(lon)
+                if stop:
+                    break
         elif mon.name == "Kecleon":
             embed.title = f"{mon.name} {bot.locale['eventstop']} - {area[1]}"
             embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}pokemon/{str(mon.id)}.png")
