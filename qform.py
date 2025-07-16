@@ -176,11 +176,21 @@ async def setup(bot):
                 icon_url = bot.config.get('form_icon_repo', bot.config['mon_icon_repo']) + f"pokemon/{icon_filename}"
 
             if found:
-                description = "\n".join(entries) if entries else "No quests found."
-                if len(description) > 4000:
-                    # Truncate and add cutoff message
-                    cutoff_msg = "\nToo many more to list... use the map for more details."
-                    description = description[:4000 - len(cutoff_msg)] + cutoff_msg
+                MAX_EMBED_DESC = 4000  # leave room for the cutoff message and formatting
+                cutoff_msg = "\nToo many more to list... use the map for more details."
+
+                # Build description line by line, never splitting an entry
+                lines = []
+                total = 0
+                for entry in entries:
+                    # +1 for the newline that will be added when joining
+                    if total + len(entry) + len(cutoff_msg) + 1 > MAX_EMBED_DESC:
+                        break
+                    lines.append(entry)
+                    total += len(entry) + 1
+                description = "\n".join(lines)
+                if len(lines) < len(entries):
+                    description += cutoff_msg
 
                 embed = discord.Embed(
                     title=f"{mon_name_found.title()} ({form_name if form_name else 'All Forms'}) Quests - {area[1]}",
