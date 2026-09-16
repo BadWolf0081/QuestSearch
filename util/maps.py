@@ -95,7 +95,7 @@ class static_map:
         elif self.provider == "tileserver":
             zoom = self.get_zoom(ne, sw, width, height, 256)
 
-            data = {"style": "osm-bright","latitude": center_lat,"longitude": center_lon,"zoom": zoom,"width": width,"height": height,"scale": 1,"markers": []}
+            data = {"style": "carto-voyager","latitude": center_lat,"longitude": center_lon,"zoom": zoom,"width": width,"height": height,"scale": 1,"markers": []}
             if items ==99997:
                 for mon_id, mon_lat, mon_lon in mons:
                      data["markers"].append({"url": f"{self.icons}reward/mega_resource/{str(mon_id)}.png","height": 32,"width": 32,"x_offset": 0,"y_offset": 0,"latitude": mon_lat,"longitude": mon_lon})
