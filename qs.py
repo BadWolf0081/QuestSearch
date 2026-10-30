@@ -12,6 +12,7 @@ from discord.ext import commands
 from util.mondetails import details
 import util.config
 import util.maps
+from util.items import get_item_index, find_item
 from util.db import (
     get_data, get_lures, get_stations, get_datarocket, get_datarocketquery,
     get_datagiovani, get_dataleaders, get_alt_data, get_dataitem, get_alt_dataitem,
@@ -186,9 +187,6 @@ async def download_url(url):
         return response.content
     return await asyncio.to_thread(fetch)
 
-def normalize_item_name(name):
-    return re.sub(r'[^a-z0-9]', '', name.lower())
-
 @bot.command(pass_context=True, aliases=bot.config['quest_aliases'])
 async def quest(ctx, areaname="", *, args=""):
     parts = args.strip().split()
@@ -196,12 +194,18 @@ async def quest(ctx, areaname="", *, args=""):
         await ctx.send("Usage: !q <area> <reward> [pokemon]")
         return
 
-    # Longest leading run of words that names an item (e.g. "rare candy").
-    item_names = {normalize_item_name(i["name"]) for i in bot.items.values()}
-    item_words = next(
-        (n for n in range(len(parts), 0, -1) if normalize_item_name("".join(parts[:n])) in item_names),
-        0,
-    )
+    # Longest leading run of words that names an item (e.g. "rare candy", "mossy module").
+    # A real Pokémon name as the first word wins over a loose item match.
+    item_match = None
+    item_words = 0
+    if parts[0].lower() != "mega":
+        item_index = await get_item_index(bot)
+        loose = parts[0].lower() not in {p["name"].lower() for p in poke_lookup}
+        for n in range(len(parts), 0, -1):
+            item_match = find_item(" ".join(parts[:n]), item_index, loose=loose)
+            if item_match:
+                item_words = n
+                break
 
     if parts[0].lower() == "mega" and len(parts) > 1:
         reward = "mega"
@@ -229,26 +233,22 @@ async def quest(ctx, areaname="", *, args=""):
     items = list()
     mons = list()
     item_found = False
-    user_item = normalize_item_name(reward)
     quests = []
     quests2 = []
 
-    for item_id, item in bot.items.items():
-        item_name_norm = normalize_item_name(item["name"])
-        if area[1] == bot.locale['unknown']:
-            footer_text = area[1]
-            loading = f"{footer_text}"
-            embed.description = bot.locale["no_area_found"]
-            item_found = True
-            break
-        elif item_name_norm == user_item:
-            embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png")
-            embed.title = f"{item['name']} {bot.locale['quests']} - {area[1]}"
-            items.append(int(item_id))
-            item_found = True
-            quests = await get_dataitem(bot.config, area, item_id)
-            quests2 = await get_alt_dataitem(bot.config, area, item_id)
-            break
+    if area[1] == bot.locale['unknown']:
+        footer_text = area[1]
+        loading = f"{footer_text}"
+        embed.description = bot.locale["no_area_found"]
+        item_found = True
+    elif item_match:
+        item_id, item_name = item_match
+        embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png")
+        embed.title = f"{item_name} {bot.locale['quests']} - {area[1]}"
+        items.append(int(item_id))
+        item_found = True
+        quests = await get_dataitem(bot.config, area, item_id)
+        quests2 = await get_alt_dataitem(bot.config, area, item_id)
 
     if item_found:
         length = 0

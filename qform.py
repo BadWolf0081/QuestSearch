@@ -4,10 +4,9 @@ import re
 import difflib
 import logging
 import ast
-import time
-import asyncio
-import requests
 from discord.ext import commands
+from util.forms import load_forms
+from util.items import get_item_index, find_item
 
 logging.basicConfig(level=logging.DEBUG)
 logging.getLogger("discord").setLevel(logging.WARNING)
@@ -22,34 +21,7 @@ def search_icon_index(obj, filename):
                 return True
     return False
 
-FORMS_CACHE_SECONDS = 3600
-_forms_cache = {"data": None, "time": 0.0}
-
-def _fetch_forms(url):
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-    return response.json()
-
-async def load_forms(url):
-    """Return form names from the configured URL (cached), falling back to the local file."""
-    if url:
-        now = time.time()
-        if _forms_cache["data"] is not None and now - _forms_cache["time"] < FORMS_CACHE_SECONDS:
-            return _forms_cache["data"]
-        try:
-            data = await asyncio.to_thread(_fetch_forms, url)
-            _forms_cache["data"] = data
-            _forms_cache["time"] = now
-            return data
-        except Exception as err:
-            print(f"[QFORM] Could not load forms_url, using fallback: {err}")
-            if _forms_cache["data"] is not None:
-                return _forms_cache["data"]
-    with open("data/forms/formsen.json", encoding="utf-8") as f:
-        return json.load(f)
-
-async def send_item_quests(ctx, bot, area, item_id):
-    item_name = bot.items[item_id]["name"]
+async def send_item_quests(ctx, bot, area, item_id, item_name):
     quests = list(await bot.get_dataitem(bot.config, area, item_id))
     quests.extend(await bot.get_alt_dataitem(bot.config, area, item_id))
 
@@ -117,19 +89,19 @@ async def setup(bot):
                 await ctx.send(f"Unknown area: {areaname}")
                 return
 
-            # An exact item name (e.g. "rare candy") is searched as an item reward instead of a Pokémon.
-            item_query = re.sub(r'[^a-z0-9]', '', f"{pokemon_name}{form_query}".lower())
-            item_id = next(
-                (i for i, item in bot.items.items() if re.sub(r'[^a-z0-9]', '', item["name"].lower()) == item_query),
-                None,
-            )
-            if item_id is not None:
-                await send_item_quests(ctx, bot, area, item_id)
-                return
-
             # Load mon_names/en.txt for name->id mapping
             with open("data/mon_names/en.txt", encoding="utf-8") as f:
                 mon_names = ast.literal_eval(f.read())
+
+            # An item name (e.g. "rare candy", "mossy module") is searched as an item reward.
+            # A real Pokémon name always wins over a loose item match.
+            is_exact_mon = pokemon_name.lower() in {n.lower() for n in mon_names}
+            item_match = find_item(
+                f"{pokemon_name} {form_query}".strip(), await get_item_index(bot), loose=not is_exact_mon
+            )
+            if item_match:
+                await send_item_quests(ctx, bot, area, *item_match)
+                return
 
             # Fuzzy Pokémon name lookup
             def fuzzy_mon_lookup(query, mon_names):
