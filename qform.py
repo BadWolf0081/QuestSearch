@@ -21,15 +21,15 @@ def search_icon_index(obj, filename):
 
 async def setup(bot):
     @bot.command(name="qform")
-    async def qform(ctx, areaname="", pokemon_name="", form_query=""):
+    async def qform(ctx, areaname="", pokemon_name="", *, form_query=""):
         """
-        Usage: !qform <area> <pokemon name> [form]
+        Usage: !qform <area> <pokemon name> [form name or ID]
         Example: !qform Greatermoncton meowth galarian
         """
         try:
             print(f"[QFORM DEBUG] area='{areaname}', pokemon_name='{pokemon_name}', form_query='{form_query}'")
             if not areaname or not pokemon_name:
-                await ctx.send("Usage: !qform <area> <pokemon name> [form]")
+                await ctx.send("Usage: !qform <area> <pokemon name> [form name or ID]")
                 return
 
             area = bot.get_area(areaname)
