@@ -196,9 +196,19 @@ async def quest(ctx, areaname="", *, args=""):
         await ctx.send("Usage: !q <area> <reward> [pokemon]")
         return
 
+    # Longest leading run of words that names an item (e.g. "rare candy").
+    item_names = {normalize_item_name(i["name"]) for i in bot.items.values()}
+    item_words = next(
+        (n for n in range(len(parts), 0, -1) if normalize_item_name("".join(parts[:n])) in item_names),
+        0,
+    )
+
     if parts[0].lower() == "mega" and len(parts) > 1:
         reward = "mega"
         mon_name = " ".join(parts[1:])
+    elif item_words:
+        reward = " ".join(parts[:item_words])
+        mon_name = " ".join(parts[item_words:])
     else:
         reward = parts[0]
         mon_name = " ".join(parts[1:]) if len(parts) > 1 else ""

@@ -48,11 +48,61 @@ async def load_forms(url):
     with open("data/forms/formsen.json", encoding="utf-8") as f:
         return json.load(f)
 
+async def send_item_quests(ctx, bot, area, item_id):
+    item_name = bot.items[item_id]["name"]
+    quests = list(await bot.get_dataitem(bot.config, area, item_id))
+    quests.extend(await bot.get_alt_dataitem(bot.config, area, item_id))
+
+    entries = []
+    lat_list = []
+    lon_list = []
+    reward_items = []
+    for quest_json, quest_template, lat, lon, stop_name, stop_id in quests:
+        try:
+            info = json.loads(quest_json)[0]["info"]
+            if int(info.get("item_id")) != int(item_id):
+                continue
+            amount = info.get("amount")
+        except Exception:
+            continue
+        entries.append(f"[{stop_name}]({bot.get_map_url(lat, lon, stop_id)}) x{amount}")
+        lat_list.append(lat)
+        lon_list.append(lon)
+        reward_items.append([int(item_id), lat, lon])
+
+    embed = discord.Embed(
+        title=f"{item_name} Quests - {area[1]}",
+        color=discord.Color.blue()
+    )
+    embed.set_thumbnail(url=f"{bot.config['mon_icon_repo']}reward/item/{item_id}.png")
+    if not entries:
+        embed.description = f"No quests found for {item_name} in {area[1]}."
+        await ctx.send(embed=embed)
+        return
+
+    cutoff_msg = "\nToo many more to list... use the map for more details."
+    lines = []
+    total = 0
+    for entry in entries:
+        if total + len(entry) + len(cutoff_msg) + 1 > 4000:
+            break
+        lines.append(entry)
+        total += len(entry) + 1
+    embed.description = "\n".join(lines) + (cutoff_msg if len(lines) < len(entries) else "")
+    msg = await ctx.send(embed=embed)
+
+    if getattr(bot, "static_map", None) and bot.config.get("use_static"):
+        image = await bot.static_map.quest(lat_list, lon_list, reward_items, [], bot.custom_emotes)
+        if image:
+            embed.set_image(url=image)
+            await msg.edit(embed=embed)
+
 async def setup(bot):
     @bot.command(name="qform")
     async def qform(ctx, areaname="", pokemon_name="", *, form_query=""):
         """
         Usage: !qform <area> <pokemon name> [form name or ID]
+               !qform <area> <item name>
         Example: !qform Greatermoncton meowth galarian
         """
         try:
@@ -65,6 +115,16 @@ async def setup(bot):
             print(f"[QFORM DEBUG] Area lookup: {area}")
             if area[1] == bot.locale['unknown']:
                 await ctx.send(f"Unknown area: {areaname}")
+                return
+
+            # An exact item name (e.g. "rare candy") is searched as an item reward instead of a Pokémon.
+            item_query = re.sub(r'[^a-z0-9]', '', f"{pokemon_name}{form_query}".lower())
+            item_id = next(
+                (i for i, item in bot.items.items() if re.sub(r'[^a-z0-9]', '', item["name"].lower()) == item_query),
+                None,
+            )
+            if item_id is not None:
+                await send_item_quests(ctx, bot, area, item_id)
                 return
 
             # Load mon_names/en.txt for name->id mapping
