@@ -179,6 +179,13 @@ def add_quest_entry(
         length += len(entry)
         return text, length, False
 
+async def download_url(url):
+    def fetch():
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        return response.content
+    return await asyncio.to_thread(fetch)
+
 def normalize_item_name(name):
     return re.sub(r'[^a-z0-9]', '', name.lower())
 
@@ -1017,7 +1024,7 @@ async def quest(ctx, areaname="", *, args=""):
                         emote_exist = True
                 if not emote_exist:
                     try:
-                        image = await Admin.download_url("", emote_img)
+                        image = await download_url(emote_img)
                         emote = await guild.create_custom_emoji(name=emote_name, image=image)
                         emote_ref = f"<:{emote.name}:{emote.id}>"
 
