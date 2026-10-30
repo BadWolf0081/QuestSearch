@@ -72,6 +72,7 @@ async def setup(bot):
 
             # Query for quests with this Pokémon (all forms)
             quests = await bot.get_data(bot.config, area, pokedex_id)
+            quests.extend(await bot.get_alt_data(bot.config, area, pokedex_id))
             found = False
             entries = []
             forms_with_quests = {}
