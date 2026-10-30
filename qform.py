@@ -4,6 +4,9 @@ import re
 import difflib
 import logging
 import ast
+import time
+import asyncio
+import requests
 from discord.ext import commands
 
 logging.basicConfig(level=logging.DEBUG)
@@ -18,6 +21,32 @@ def search_icon_index(obj, filename):
             if search_icon_index(v, filename):
                 return True
     return False
+
+FORMS_CACHE_SECONDS = 3600
+_forms_cache = {"data": None, "time": 0.0}
+
+def _fetch_forms(url):
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+    return response.json()
+
+async def load_forms(url):
+    """Return form names from the configured URL (cached), falling back to the local file."""
+    if url:
+        now = time.time()
+        if _forms_cache["data"] is not None and now - _forms_cache["time"] < FORMS_CACHE_SECONDS:
+            return _forms_cache["data"]
+        try:
+            data = await asyncio.to_thread(_fetch_forms, url)
+            _forms_cache["data"] = data
+            _forms_cache["time"] = now
+            return data
+        except Exception as err:
+            print(f"[QFORM] Could not load forms_url, using fallback: {err}")
+            if _forms_cache["data"] is not None:
+                return _forms_cache["data"]
+    with open("data/forms/formsen.json", encoding="utf-8") as f:
+        return json.load(f)
 
 async def setup(bot):
     @bot.command(name="qform")
@@ -63,9 +92,8 @@ async def setup(bot):
 
             print(f"[QFORM DEBUG] Found: {mon_name_found} (ID: {pokedex_id})")
 
-            # Load formsen.json for form name/id mapping
-            with open("data/forms/formsen.json", encoding="utf-8") as f:
-                formsen = json.load(f)
+            # Form names: forms_url if configured, otherwise data/forms/formsen.json
+            formsen = await load_forms(bot.config.get('forms_url'))
             # Load index.json for icon existence check
             with open("data/forms/index.json", encoding="utf-8") as f:
                 icon_index = json.load(f)

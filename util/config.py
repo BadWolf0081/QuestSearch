@@ -20,6 +20,7 @@ def create_config(config_path):
     config['emote_repo'] = config_raw.get('Config','emote_repo')
     config['host_channel'] = config_raw.get('Config','trash_channel')
     config['host_server'] = config_raw.get('Config','trash_server')
+    config['forms_url'] = config_raw.get('Config','forms_url', fallback='').strip()
 
 
 

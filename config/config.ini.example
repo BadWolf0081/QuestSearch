@@ -10,6 +10,8 @@ trash_server = ######
 pokemon_icon_repo = https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border/
 emote_repo = https://raw.githubusercontent.com/alexmartz710/dp_emotes/master/
 form_icon_repo = https://your-highres-icons-url/
+# Optional: URL of a form-name translation file used by !qform. If omitted or unreachable, data/forms/formsen.json is used.
+# forms_url = https://raw.githubusercontent.com/WatWowMap/pogo-translations/master/static/locales/en.json
 
 [Maps]
 use_static_maps = True
