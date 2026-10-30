@@ -71,7 +71,7 @@ async def setup(bot):
                 icon_index = json.load(f)
 
             # Query for quests with this Pokémon (all forms)
-            quests = await bot.get_data(bot.config, area, pokedex_id)
+            quests = list(await bot.get_data(bot.config, area, pokedex_id))
             quests.extend(await bot.get_alt_data(bot.config, area, pokedex_id))
             found = False
             entries = []
