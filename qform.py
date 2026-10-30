@@ -106,8 +106,12 @@ async def setup(bot):
             form_id_for_mon = None
             form_name = None
             if form_query:
+                # Accept the ID shown in the available-forms list.
+                if form_query.isdigit() and int(form_query) in forms_with_quests:
+                    form_id_for_mon = int(form_query)
+                    form_name = form_id_to_name[form_id_for_mon]
                 # Try exact match among available forms
-                if form_query.lower() in form_name_to_id:
+                elif form_query.lower() in form_name_to_id:
                     form_id_for_mon = form_name_to_id[form_query.lower()]
                     form_name = form_id_to_name[form_id_for_mon]
                 else:
